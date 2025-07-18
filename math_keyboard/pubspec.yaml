@@ -33,7 +33,7 @@ dev_dependencies:
 
 flutter:
   assets:
-    - ../assets/images/VirtualKeyboard/
+    - assets/images/VirtualKeyboard/
   fonts:
   - family: CustomKeyIcons
     fonts:
