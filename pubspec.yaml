@@ -1,0 +1,38 @@
+name: math_keyboard_demo
+description: A demo app for testing math keyboard customizations.
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: '>=3.22.2'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  
+  # Use the local math_keyboard package
+  math_keyboard:
+    path: ./math_keyboard
+  
+  # Other dependencies from the original app
+  cupertino_icons: ^1.0.8
+  google_fonts: ^6.1.0
+
+dependency_overrides:
+  intl: ^0.20.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+  
+  # Assets for math keyboard icons
+  assets:
+    - assets/images/VirtualKeyboard/

@@ -33,6 +33,8 @@ class BasicKeyboardButtonConfig extends KeyboardButtonConfig {
     this.args,
     this.asTex = false,
     this.highlighted = false,
+    this.longPressOptions,
+    this.svgIcon,
     List<String> keyboardCharacters = const [],
     int? flex,
   }) : super(
@@ -54,30 +56,49 @@ class BasicKeyboardButtonConfig extends KeyboardButtonConfig {
 
   /// The highlight level of this button.
   final bool highlighted;
+
+  /// List of options to show on long press.
+  final List<String>? longPressOptions;
+
+  /// Optional SVG icon path (relative to assets/images/VirtualKeyboard/).
+  /// When provided, this will be used instead of the label.
+  final String? svgIcon;
 }
 
 /// Class representing a button configuration of the Delete Button.
 class DeleteButtonConfig extends KeyboardButtonConfig {
   /// Constructs a [DeleteButtonConfig].
-  DeleteButtonConfig({int? flex}) : super(flex: flex);
+  DeleteButtonConfig({int? flex, this.svgIcon}) : super(flex: flex);
+
+  /// Optional SVG icon path (relative to assets/images/VirtualKeyboard/).
+  final String? svgIcon;
 }
 
 /// Class representing a button configuration of the Previous Button.
 class PreviousButtonConfig extends KeyboardButtonConfig {
-  /// Constructs a [DeleteButtonConfig].
-  PreviousButtonConfig({int? flex}) : super(flex: flex);
+  /// Constructs a [PreviousButtonConfig].
+  PreviousButtonConfig({int? flex, this.svgIcon}) : super(flex: flex);
+
+  /// Optional SVG icon path (relative to assets/images/VirtualKeyboard/).
+  final String? svgIcon;
 }
 
 /// Class representing a button configuration of the Next Button.
 class NextButtonConfig extends KeyboardButtonConfig {
-  /// Constructs a [DeleteButtonConfig].
-  NextButtonConfig({int? flex}) : super(flex: flex);
+  /// Constructs a [NextButtonConfig].
+  NextButtonConfig({int? flex, this.svgIcon}) : super(flex: flex);
+
+  /// Optional SVG icon path (relative to assets/images/VirtualKeyboard/).
+  final String? svgIcon;
 }
 
 /// Class representing a button configuration of the Submit Button.
 class SubmitButtonConfig extends KeyboardButtonConfig {
   /// Constructs a [SubmitButtonConfig].
-  SubmitButtonConfig({int? flex}) : super(flex: flex);
+  SubmitButtonConfig({int? flex, this.svgIcon}) : super(flex: flex);
+
+  /// Optional SVG icon path (relative to assets/images/VirtualKeyboard/).
+  final String? svgIcon;
 }
 
 /// Class representing a button configuration of the Page Toggle Button.
@@ -95,22 +116,9 @@ final _digitButtons = [
       label: '$i',
       value: '$i',
       keyboardCharacters: ['$i'],
+      svgIcon: '$i.svg',
     ),
 ];
-
-const _decimalButton = BasicKeyboardButtonConfig(
-  label: '.',
-  value: '.',
-  keyboardCharacters: ['.', ','],
-  highlighted: true,
-);
-
-const _subtractButton = BasicKeyboardButtonConfig(
-  label: '−',
-  value: '-',
-  keyboardCharacters: ['-'],
-  highlighted: true,
-);
 
 /// Keyboard showing extended functionality.
 final functionKeyboard = [
@@ -210,64 +218,152 @@ final functionKeyboard = [
       value: '(',
       highlighted: true,
       keyboardCharacters: ['('],
+      svgIcon: 'l_brace.svg',
     ),
     const BasicKeyboardButtonConfig(
       label: ')',
       value: ')',
       highlighted: true,
       keyboardCharacters: [')'],
+      svgIcon: 'r_brace.svg',
     ),
-    PreviousButtonConfig(),
-    NextButtonConfig(),
-    DeleteButtonConfig(),
+    PreviousButtonConfig(svgIcon: 'previous_char.svg'),
+    NextButtonConfig(svgIcon: 'next_char.svg'),
+    DeleteButtonConfig(svgIcon: 'backspace.svg'),
   ],
 ];
 
 /// Standard keyboard for math expression input.
 final standardKeyboard = [
   [
+    // First row - Variables and basic operations
+    const BasicKeyboardButtonConfig(
+      label: 'x',
+      value: 'x',
+      keyboardCharacters: ['x'],
+      longPressOptions: ['a'], // More options for better testing
+      svgIcon: 'var_x.svg',
+      highlighted: true,
+    ),
     _digitButtons[7],
     _digitButtons[8],
     _digitButtons[9],
-    const BasicKeyboardButtonConfig(
-      label: '×',
-      value: r'\cdot',
-      keyboardCharacters: ['*'],
-      highlighted: true,
-    ),
     const BasicKeyboardButtonConfig(
       label: '÷',
       value: r'\frac',
       keyboardCharacters: ['/'],
       args: [TeXArg.braces, TeXArg.braces],
+      svgIcon: 'divide.svg',
       highlighted: true,
     ),
+    DeleteButtonConfig(svgIcon: 'backspace.svg'),
   ],
   [
+    // Second row - More variables and operations
+    const BasicKeyboardButtonConfig(
+      label: 'y',
+      value: 'y',
+      keyboardCharacters: ['y'],
+      longPressOptions: ['b'],
+      svgIcon: 'var_y.svg',
+      highlighted: true,
+    ),
     _digitButtons[4],
     _digitButtons[5],
     _digitButtons[6],
     const BasicKeyboardButtonConfig(
-      label: '+',
-      value: '+',
-      keyboardCharacters: ['+'],
+      label: '×',
+      value: r'\cdot',
+      keyboardCharacters: ['*'],
+      svgIcon: 'multiply.svg',
       highlighted: true,
     ),
-    _subtractButton,
+    const BasicKeyboardButtonConfig(
+      label: r'\frac{\Box}{\Box}',
+      value: r'\frac',
+      args: [TeXArg.braces, TeXArg.braces],
+      asTex: true,
+      svgIcon: 'fraction.svg',
+    ),
   ],
   [
+    // Third row - Variables and numbers
+    const BasicKeyboardButtonConfig(
+      label: 'z',
+      value: 'z',
+      keyboardCharacters: ['z'],
+      longPressOptions: ['c'],
+      svgIcon: 'var_z.svg',
+      highlighted: true,
+    ),
     _digitButtons[1],
     _digitButtons[2],
     _digitButtons[3],
-    _decimalButton,
-    DeleteButtonConfig(),
+
+    const BasicKeyboardButtonConfig(
+      label: '−',
+      value: '-',
+      keyboardCharacters: ['-'],
+      svgIcon: 'subtract.svg',
+      highlighted: true,
+    ),
+    const BasicKeyboardButtonConfig(
+      label: r'\sqrt{\Box}',
+      value: r'\sqrt',
+      args: [TeXArg.braces],
+      asTex: true,
+      svgIcon: 'sqrt.svg',
+      keyboardCharacters: ['r'],
+    ),
   ],
   [
-    const PageButtonConfig(),
+    // Fourth row - Parentheses and operations
+    const BasicKeyboardButtonConfig(
+      label: '(',
+      value: '(',
+      keyboardCharacters: ['('],
+      longPressOptions: ['['],
+      svgIcon: 'l_brace.svg',
+      highlighted: true,
+    ),
+    const BasicKeyboardButtonConfig(
+      label: ')',
+      value: ')',
+      keyboardCharacters: [')'],
+      longPressOptions: [']'],
+      svgIcon: 'r_brace.svg',
+      highlighted: true,
+    ),
     _digitButtons[0],
-    PreviousButtonConfig(),
-    NextButtonConfig(),
-    SubmitButtonConfig(),
+    const BasicKeyboardButtonConfig(
+      label: '=',
+      value: '=',
+      keyboardCharacters: ['='],
+      longPressOptions: ['≠', '<', '>'],
+      svgIcon: 'equal.svg',
+      highlighted: true,
+    ),
+    const BasicKeyboardButtonConfig(
+      label: '+',
+      value: '+',
+      keyboardCharacters: ['+'],
+      svgIcon: 'add.svg',
+      highlighted: true,
+    ),
+    const BasicKeyboardButtonConfig(
+      label: r'\Box^2',
+      value: '^2',
+      args: [TeXArg.braces],
+      asTex: true,
+      longPressOptions: ['^3'],
+      svgIcon: 'power^2.svg',
+    ),
+  ],
+  [
+    // Fifth row - Navigation and controls (only 3 buttons, each taking 2 flex)
+    PreviousButtonConfig(flex: 2, svgIcon: 'previous_char.svg'),
+    NextButtonConfig(flex: 2, svgIcon: 'next_char.svg'),
+    SubmitButtonConfig(flex: 2, svgIcon: 'commit.svg'),
   ],
 ];
 
@@ -277,24 +373,28 @@ final numberKeyboard = [
     _digitButtons[7],
     _digitButtons[8],
     _digitButtons[9],
-    _subtractButton,
+    const BasicKeyboardButtonConfig(
+      label: '−',
+      value: '-',
+      keyboardCharacters: ['-'],
+      svgIcon: 'subtract.svg',
+    )
   ],
   [
     _digitButtons[4],
     _digitButtons[5],
     _digitButtons[6],
-    _decimalButton,
   ],
   [
     _digitButtons[1],
     _digitButtons[2],
     _digitButtons[3],
-    DeleteButtonConfig(),
+    DeleteButtonConfig(svgIcon: 'backspace.svg'),
   ],
   [
-    PreviousButtonConfig(),
+    PreviousButtonConfig(svgIcon: 'previous_char.svg'),
     _digitButtons[0],
-    NextButtonConfig(),
-    SubmitButtonConfig(),
+    NextButtonConfig(svgIcon: 'next_char.svg'),
+    SubmitButtonConfig(svgIcon: 'commit.svg'),
   ],
 ];
