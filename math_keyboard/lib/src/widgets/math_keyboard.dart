@@ -649,6 +649,7 @@ class _BasicButtonState extends State<_BasicButton> {
       // Use SVG icon if provided
       result = SvgPicture.asset(
         'assets/images/VirtualKeyboard/${widget.svgIcon}',
+        package: 'math_keyboard',
         width: 24,
         height: 24,
         colorFilter: const ColorFilter.mode(
@@ -837,6 +838,7 @@ class _NavigationButton extends StatelessWidget {
       // Use SVG icon if provided
       iconWidget = SvgPicture.asset(
         'assets/images/VirtualKeyboard/$svgIcon',
+        package: 'math_keyboard',
         width: iconSize * 0.6,
         height: iconSize * 0.6,
         colorFilter: ColorFilter.mode(
