@@ -325,7 +325,7 @@ class _Buttons extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 325, // Increased height for 5 rows (5 * 56 + padding)
+      height: 300, // Increased height for 5 rows (5 * 56 + padding)
       child: AnimatedBuilder(
         animation: controller,
         builder: (context, child) {
@@ -335,7 +335,7 @@ class _Buttons extends StatelessWidget {
             children: [
               for (final row in layout)
                 SizedBox(
-                  height: 61,
+                  height: 40,
                   child: Row(
                     children: [
                       for (final config in row)
