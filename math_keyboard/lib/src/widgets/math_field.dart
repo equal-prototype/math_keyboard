@@ -1,3 +1,4 @@
+/// Enum for horizontal text alignment in MathField.
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
@@ -9,6 +10,11 @@ import 'package:math_keyboard/src/foundation/node.dart';
 import 'package:math_keyboard/src/widgets/decimal_separator.dart';
 import 'package:math_keyboard/src/widgets/math_keyboard.dart';
 import 'package:math_keyboard/src/widgets/view_insets.dart';
+
+enum TextAlignHorizontal {
+  left,
+  right,
+}
 
 /// Widget that is like a [TextField] for math expressions.
 ///
@@ -27,7 +33,11 @@ class MathField extends StatefulWidget {
     this.onChanged,
     this.onSubmitted,
     this.opensKeyboard = true,
+    this.textAlignHorizontal = TextAlignHorizontal.left,
   });
+
+  /// Controls the horizontal alignment of the math field content.
+  final TextAlignHorizontal textAlignHorizontal;
 
   /// The controller for the math field.
   ///
@@ -520,6 +530,7 @@ class _MathFieldState extends State<MathField> with TickerProviderStateMixin {
                   hasFocus: _focusNode.hasFocus,
                   decoration: widget.decoration
                       .applyDefaults(Theme.of(context).inputDecorationTheme),
+                  textAlignHorizontal: widget.textAlignHorizontal,
                 );
               },
             ),
@@ -540,6 +551,7 @@ class _FieldPreview extends StatelessWidget {
     required this.hasFocus,
     required this.decoration,
     required this.scrollController,
+    this.textAlignHorizontal = TextAlignHorizontal.left,
   }) : super(key: key);
 
   /// The controller for the math field.
@@ -557,6 +569,9 @@ class _FieldPreview extends StatelessWidget {
 
   /// The decoration to show around the text field.
   final InputDecoration decoration;
+
+  /// The horizontal alignment of the content.
+  final TextAlignHorizontal textAlignHorizontal;
 
   // Adapted from InputDecorator._getFillColor.
   Color _getDisabledCursorColor(ThemeData themeData) {
@@ -636,31 +651,37 @@ class _FieldPreview extends StatelessWidget {
         child: SingleChildScrollView(
           controller: scrollController,
           scrollDirection: Axis.horizontal,
-          child: Stack(
-            children: [
-              Transform.translate(
-                offset: !controller.isEmpty
-                    ? Offset.zero
-                    // This is a workaround for aligning the cursor properly
-                    // when the math field is empty. This way it matches the
-                    // TextField behavior.
-                    : Offset(-1, 0),
-                child: Math.tex(
-                  tex,
-                  options: MathOptions(
-                    fontSize: MathOptions.defaultFontSize,
-                    color: Theme.of(context).colorScheme.onSurface,
+          reverse: textAlignHorizontal == TextAlignHorizontal.right,
+          child: Align(
+            alignment: textAlignHorizontal == TextAlignHorizontal.right
+                ? Alignment.centerRight
+                : Alignment.centerLeft,
+            child: Stack(
+              children: [
+                Transform.translate(
+                  offset: !controller.isEmpty
+                      ? Offset.zero
+                      // This is a workaround for aligning the cursor properly
+                      // when the math field is empty. This way it matches the
+                      // TextField behavior.
+                      : Offset(-1, 0),
+                  child: Math.tex(
+                    tex,
+                    options: MathOptions(
+                      fontSize: MathOptions.defaultFontSize,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
                   ),
                 ),
-              ),
-              // todo: let InputDecorator take care of the hint text (as soon as
-              // todo| we figure out how to deal with the baseline problem).
-              if (controller.isEmpty)
-                Text(
-                  decoration.hintText ?? '',
-                  style: _getHintStyle(Theme.of(context)),
-                )
-            ],
+                // todo: let InputDecorator take care of the hint text (as soon as
+                // todo| we figure out how to deal with the baseline problem).
+                if (controller.isEmpty)
+                  Text(
+                    decoration.hintText ?? '',
+                    style: _getHintStyle(Theme.of(context)),
+                  )
+              ],
+            ),
           ),
         ),
       ),
