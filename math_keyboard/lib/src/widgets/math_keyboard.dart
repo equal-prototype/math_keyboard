@@ -39,7 +39,7 @@ enum MathKeyboardType {
 }
 
 /// Widget displaying the math keyboard.
-class MathKeyboard extends StatelessWidget {
+class MathKeyboard extends StatefulWidget {
   /// Constructs a [MathKeyboard].
   const MathKeyboard({
     Key? key,
@@ -50,10 +50,10 @@ class MathKeyboard extends StatelessWidget {
     this.insetsState,
     this.slideAnimation,
     this.padding = const EdgeInsets.only(
-      bottom: 4,
       left: 4,
       right: 4,
     ),
+    this.initialSubject = MathSubject.general,
   }) : super(key: key);
 
   /// The controller for editing the math field.
@@ -84,13 +84,35 @@ class MathKeyboard extends StatelessWidget {
 
   /// Insets of the keyboard.
   ///
-  /// Defaults to `const EdgeInsets.only(bottom: 4, left: 4, right: 4),`.
+  /// Defaults to `const EdgeInsets.only(left: 4, right: 4),`.
   final EdgeInsets padding;
+
+  /// The initial subject to display.
+  final MathSubject initialSubject;
+
+  @override
+  State<MathKeyboard> createState() => _MathKeyboardState();
+}
+
+class _MathKeyboardState extends State<MathKeyboard> {
+  late MathSubject _currentSubject;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentSubject = widget.initialSubject;
+  }
+
+  void _onSubjectChanged(MathSubject subject) {
+    setState(() {
+      _currentSubject = subject;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final curvedSlideAnimation = CurvedAnimation(
-      parent: slideAnimation ?? AlwaysStoppedAnimation(1),
+      parent: widget.slideAnimation ?? AlwaysStoppedAnimation(1),
       curve: Curves.ease,
     );
 
@@ -109,43 +131,47 @@ class MathKeyboard extends StatelessWidget {
               type: MaterialType.transparency,
               child: ColoredBox(
                 color: const Color(0xFFF2F4F8), // Light gray background
-                child: SafeArea(
-                  top: false,
-                  child: _KeyboardBody(
-                    insetsState: insetsState,
-                    slideAnimation:
-                        slideAnimation == null ? null : curvedSlideAnimation,
-                    child: Padding(
-                      padding: padding,
-                      child: Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(
-                            maxWidth: 5e2,
-                          ),
-                          child: Column(
-                            children: [
-                              // if (type != MathKeyboardType.numberOnly)
-                              //   _Variables(
-                              //     controller: controller,
-                              //     variables: variables,
-                              //   ),
-                              Padding(
-                                padding: const EdgeInsets.only(
-                                  top: 4,
-                                ),
-                                child: _Buttons(
-                                  controller: controller,
-                                  page1: type == MathKeyboardType.numberOnly
-                                      ? numberKeyboard
-                                      : standardKeyboard,
-                                  page2: type == MathKeyboardType.numberOnly
-                                      ? null
-                                      : functionKeyboard,
-                                  onSubmit: onSubmit,
-                                ),
+                child: _KeyboardBody(
+                  insetsState: widget.insetsState,
+                  slideAnimation: widget.slideAnimation == null
+                      ? null
+                      : curvedSlideAnimation,
+                  child: Padding(
+                    padding: widget.padding,
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(
+                          maxWidth: 5e2,
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            // Subject selection row
+                            if (widget.type != MathKeyboardType.numberOnly)
+                              _SubjectSelectionRow(
+                                currentSubject: _currentSubject,
+                                onSubjectChanged: _onSubjectChanged,
                               ),
-                            ],
-                          ),
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                top: 2,
+                              ),
+                              child: _Buttons(
+                                controller: widget.controller,
+                                page1: widget.type ==
+                                        MathKeyboardType.numberOnly
+                                    ? numberKeyboard
+                                    : _getKeyboardForSubject(_currentSubject),
+                                page2:
+                                    widget.type == MathKeyboardType.numberOnly
+                                        ? null
+                                        : functionKeyboard,
+                                onSubmit: widget.onSubmit,
+                                currentSubject: _currentSubject,
+                                onSubjectChanged: _onSubjectChanged,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -155,6 +181,98 @@ class MathKeyboard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  List<List<KeyboardButtonConfig>> _getKeyboardForSubject(MathSubject subject) {
+    final subjectKeyboards = getSubjectKeyboards();
+    return subjectKeyboards[subject] ?? standardKeyboard;
+  }
+}
+
+/// Widget showing the subject selection buttons.
+class _SubjectSelectionRow extends StatelessWidget {
+  const _SubjectSelectionRow({
+    Key? key,
+    required this.currentSubject,
+    required this.onSubjectChanged,
+  }) : super(key: key);
+
+  final MathSubject currentSubject;
+  final ValueChanged<MathSubject> onSubjectChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 48,
+      margin: const EdgeInsets.only(bottom: 2),
+      decoration: const BoxDecoration(
+        color: Colors.white, // Sfondo bianco per i bottoni dei soggetti
+      ),
+      child: Row(
+        children: subjectSelectionRow
+            .map((config) => Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: _SubjectButton(
+                      config: config,
+                      isActive: config.subject == currentSubject,
+                      onTap: () => onSubjectChanged(config.subject),
+                    ),
+                  ),
+                ))
+            .toList(),
+      ),
+    );
+  }
+}
+
+/// Widget for a single subject selection button.
+class _SubjectButton extends StatelessWidget {
+  const _SubjectButton({
+    Key? key,
+    required this.config,
+    required this.isActive,
+    required this.onTap,
+  }) : super(key: key);
+
+  final SubjectButtonConfig config;
+  final bool isActive;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 2),
+      decoration: BoxDecoration(
+        color: isActive ? const Color(0xFF09162E) : const Color(0xFFF2F4F8),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 1,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(6),
+          child: Container(
+            alignment: Alignment.center,
+            child: Text(
+              config.label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isActive ? Colors.white : Colors.black87,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -305,6 +423,8 @@ class _Buttons extends StatelessWidget {
     this.page1,
     this.page2,
     this.onSubmit,
+    this.currentSubject,
+    this.onSubjectChanged,
   }) : super(key: key);
 
   /// The editing controller for the math field that the variables are connected
@@ -322,10 +442,17 @@ class _Buttons extends StatelessWidget {
   /// Can be `null`.
   final VoidCallback? onSubmit;
 
+  /// The current selected subject.
+  final MathSubject? currentSubject;
+
+  /// Callback for when subject changes.
+  final ValueChanged<MathSubject>? onSubjectChanged;
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 241, // Increased height for 5 rows (5 * 56 + padding)
+      height:
+          265, // Updated height for 5 rows (5 * 44 + padding = 220 + 45 for subject row)
       child: AnimatedBuilder(
         animation: controller,
         builder: (context, child) {
@@ -335,7 +462,7 @@ class _Buttons extends StatelessWidget {
             children: [
               for (final row in layout)
                 SizedBox(
-                  height: 40,
+                  height: 44,
                   child: Row(
                     children: [
                       for (final config in row)
@@ -400,6 +527,12 @@ class _Buttons extends StatelessWidget {
                             svgIcon: config.svgIcon,
                             onTap: onSubmit,
                             highlightLevel: 2,
+                          )
+                        else if (config is SubjectButtonConfig)
+                          _SubjectButton(
+                            config: config,
+                            isActive: config.subject == currentSubject,
+                            onTap: () => onSubjectChanged?.call(config.subject),
                           ),
                     ],
                   ),
@@ -705,7 +838,7 @@ class _BasicButtonState extends State<_BasicButton> {
         widget.label != null && RegExp(r'^[0-9]$').hasMatch(widget.label!);
 
     Widget buttonWidget = Container(
-      margin: const EdgeInsets.all(3),
+      margin: const EdgeInsets.fromLTRB(2, 2, 2, 2),
       decoration: BoxDecoration(
         color: buttonColor,
         boxShadow: [
@@ -858,7 +991,7 @@ class _NavigationButton extends StatelessWidget {
     return Expanded(
       flex: flex ?? 2,
       child: Container(
-        margin: const EdgeInsets.all(3),
+        margin: const EdgeInsets.fromLTRB(2, 2, 2, 2),
         decoration: BoxDecoration(
           color: buttonColor,
           boxShadow: [
