@@ -34,6 +34,7 @@ class MathField extends StatefulWidget {
     this.onSubmitted,
     this.opensKeyboard = true,
     this.textAlignHorizontal = TextAlignHorizontal.left,
+    this.fontSize,
   });
 
   /// Controls the horizontal alignment of the math field content.
@@ -125,6 +126,11 @@ class MathField extends StatefulWidget {
   ///
   /// Defaults to `true`.
   final bool opensKeyboard;
+
+  /// The font size for the math expressions in the field.
+  ///
+  /// If not provided, the default font size will be used.
+  final double? fontSize;
 
   @override
   _MathFieldState createState() => _MathFieldState();
@@ -531,6 +537,7 @@ class _MathFieldState extends State<MathField> with TickerProviderStateMixin {
                   decoration: widget.decoration
                       .applyDefaults(Theme.of(context).inputDecorationTheme),
                   textAlignHorizontal: widget.textAlignHorizontal,
+                  fontSize: widget.fontSize,
                 );
               },
             ),
@@ -552,6 +559,7 @@ class _FieldPreview extends StatelessWidget {
     required this.decoration,
     required this.scrollController,
     this.textAlignHorizontal = TextAlignHorizontal.left,
+    this.fontSize,
   }) : super(key: key);
 
   /// The controller for the math field.
@@ -572,6 +580,9 @@ class _FieldPreview extends StatelessWidget {
 
   /// The horizontal alignment of the content.
   final TextAlignHorizontal textAlignHorizontal;
+
+  /// The font size for the math expressions.
+  final double? fontSize;
 
   // Adapted from InputDecorator._getFillColor.
   Color _getDisabledCursorColor(ThemeData themeData) {
@@ -668,7 +679,7 @@ class _FieldPreview extends StatelessWidget {
                   child: Math.tex(
                     tex,
                     options: MathOptions(
-                      fontSize: MathOptions.defaultFontSize,
+                      fontSize: fontSize ?? MathOptions.defaultFontSize,
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
