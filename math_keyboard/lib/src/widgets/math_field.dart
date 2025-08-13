@@ -33,6 +33,7 @@ class MathField extends StatefulWidget {
     this.onChanged,
     this.onSubmitted,
     this.opensKeyboard = true,
+    this.alwaysShowKeyboard = false,
     this.textAlignHorizontal = TextAlignHorizontal.left,
     this.fontSize,
   });
@@ -127,6 +128,15 @@ class MathField extends StatefulWidget {
   /// Defaults to `true`.
   final bool opensKeyboard;
 
+  /// Whether the keyboard should always stay visible regardless of focus changes.
+  ///
+  /// When set to true, the keyboard will remain open even when focus is lost
+  /// or when other widgets are interacted with. This is useful for scenarios
+  /// where you want the keyboard to be persistently available.
+  ///
+  /// Defaults to `false`.
+  final bool alwaysShowKeyboard;
+
   /// The font size for the math expressions in the field.
   ///
   /// If not provided, the default font size will be used.
@@ -184,6 +194,13 @@ class _MathFieldState extends State<MathField> with TickerProviderStateMixin {
     });
     _cursorBlinkController.addListener(_handleBlinkUpdate);
     _controller.addListener(_handleControllerUpdate);
+
+    // Auto-open keyboard if alwaysShowKeyboard is true
+    if (widget.alwaysShowKeyboard) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _handleFocusChanged(context, open: true);
+      });
+    }
   }
 
   @override
@@ -221,6 +238,18 @@ class _MathFieldState extends State<MathField> with TickerProviderStateMixin {
         // Switch the outside focus node.
         _focusNode = widget.focusNode!;
       }
+    }
+
+    // Handle alwaysShowKeyboard parameter change
+    if (oldWidget.alwaysShowKeyboard != widget.alwaysShowKeyboard) {
+      if (widget.alwaysShowKeyboard) {
+        // If alwaysShowKeyboard is now true, open the keyboard
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _handleFocusChanged(context, open: true);
+        });
+      }
+      // If alwaysShowKeyboard is now false, we don't automatically close
+      // the keyboard to avoid disrupting user interaction
     }
   }
 
@@ -294,8 +323,9 @@ class _MathFieldState extends State<MathField> with TickerProviderStateMixin {
   /// the math keyboard should be opened and when it should be closed.
   ///
   /// When [open] is true, the keyboard should be opened and vice versa.
+  /// If [alwaysShowKeyboard] is true, the keyboard will never be closed.
   void _handleFocusChanged(BuildContext context, {required bool open}) {
-    if (!open) {
+    if (!open && !widget.alwaysShowKeyboard) {
       _keyboardSlideController.reverse();
       _cursorBlinkController.value = 1 / 2;
     } else {
@@ -363,8 +393,11 @@ class _MathFieldState extends State<MathField> with TickerProviderStateMixin {
   /// by the [_keyboardSlideController] listener callback.
   ///
   /// Keep in mind: it does not remove the focus from the field.
+  /// If [alwaysShowKeyboard] is true, this method does nothing.
   void _closeKeyboard() {
-    _keyboardSlideController.reverse();
+    if (!widget.alwaysShowKeyboard) {
+      _keyboardSlideController.reverse();
+    }
   }
 
   void _submit() {
