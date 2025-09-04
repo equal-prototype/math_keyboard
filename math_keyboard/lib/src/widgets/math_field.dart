@@ -401,7 +401,7 @@ class _MathFieldState extends State<MathField> with TickerProviderStateMixin {
   }
 
   void _submit() {
-    _focusNode.unfocus();
+    // _focusNode.unfocus();
     widget.onSubmitted?.call(
       _controller.currentEditingValue(placeholderWhenEmpty: false),
     );
