@@ -36,6 +36,7 @@ class MathField extends StatefulWidget {
     this.alwaysShowKeyboard = false,
     this.textAlignHorizontal = TextAlignHorizontal.left,
     this.fontSize,
+    this.submitButtonText = 'SEND',
   });
 
   /// Controls the horizontal alignment of the math field content.
@@ -141,6 +142,11 @@ class MathField extends StatefulWidget {
   ///
   /// If not provided, the default font size will be used.
   final double? fontSize;
+
+  /// Text to display on the submit button.
+  ///
+  /// Defaults to 'SEND'. Use 'INVIA' for Italian or other localized text.
+  final String submitButtonText;
 
   @override
   _MathFieldState createState() => _MathFieldState();
@@ -376,6 +382,7 @@ class _MathFieldState extends State<MathField> with TickerProviderStateMixin {
             type: widget.keyboardType,
             variables: _variables,
             onSubmit: _submit,
+            submitButtonText: widget.submitButtonText,
             // Note that we need to pass the insets state like this because the
             // overlay context does not have the ancestor state.
             insetsState: MathKeyboardViewInsetsState.of(this.context),
@@ -421,7 +428,7 @@ class _MathFieldState extends State<MathField> with TickerProviderStateMixin {
       if (widget.keyboardType ==
           MathKeyboardType.expression) ...<List<KeyboardButtonConfig>>[
         ...standardKeyboard,
-        ...functionKeyboard,
+        ...functionsKeyboard,
       ] else if (widget.keyboardType == MathKeyboardType.numberOnly) ...[
         ...numberKeyboard,
       ],

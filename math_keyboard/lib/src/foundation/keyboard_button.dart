@@ -1,13 +1,11 @@
 import 'package:flutter/services.dart';
+import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:math_keyboard/src/foundation/node.dart';
 
 /// Enumeration for different subject configurations.
 enum MathSubject {
-  /// Algebra basics
-  algebra,
-
-  /// Geometry
-  geometry,
+  /// Functions
+  functions,
 
   /// Trigonometry
   trigonometry,
@@ -16,10 +14,32 @@ enum MathSubject {
   calculus,
 
   /// Statistics
-  statistics,
+  letters,
+
+  /// Recently used symbols and expressions
+  recents,
 
   /// General mathematics
   general,
+}
+
+/// Enumeration for button color levels.
+/// 0 = #E3E5E8 (lightest)
+/// 1 = #C7CCD1 (light)
+/// 2 = #AEC5EF (blue)
+/// 3 = #122B5A (dark blue)
+enum ButtonColor {
+  /// Light gray - #E3E5E8
+  level0,
+
+  /// Medium gray - #C7CCD1
+  level1,
+
+  /// Light blue - #AEC5EF
+  level2,
+
+  /// Dark blue - #122B5A
+  level3,
 }
 
 /// Class representing a button configuration.
@@ -28,6 +48,7 @@ abstract class KeyboardButtonConfig {
   const KeyboardButtonConfig({
     this.flex,
     this.keyboardCharacters = const [],
+    this.color = ButtonColor.level0,
   });
 
   /// Optional flex.
@@ -43,6 +64,9 @@ abstract class KeyboardButtonConfig {
   ///
   /// Must not be `null` but can be empty.
   final List<String> keyboardCharacters;
+
+  /// The color level of this button (0-3).
+  final ButtonColor color;
 }
 
 /// Class representing a button configuration for a [FunctionButton].
@@ -53,14 +77,15 @@ class BasicKeyboardButtonConfig extends KeyboardButtonConfig {
     required this.value,
     this.args,
     this.asTex = false,
-    this.highlighted = false,
     this.longPressOptions,
     this.svgIcon,
     List<String> keyboardCharacters = const [],
     int? flex,
+    ButtonColor color = ButtonColor.level0,
   }) : super(
           flex: flex,
           keyboardCharacters: keyboardCharacters,
+          color: color,
         );
 
   /// The label of the button.
@@ -75,9 +100,6 @@ class BasicKeyboardButtonConfig extends KeyboardButtonConfig {
   /// Whether to display the label as TeX or as plain text.
   final bool asTex;
 
-  /// The highlight level of this button.
-  final bool highlighted;
-
   /// List of options to show on long press.
   final List<String>? longPressOptions;
 
@@ -89,7 +111,11 @@ class BasicKeyboardButtonConfig extends KeyboardButtonConfig {
 /// Class representing a button configuration of the Delete Button.
 class DeleteButtonConfig extends KeyboardButtonConfig {
   /// Constructs a [DeleteButtonConfig].
-  DeleteButtonConfig({int? flex, this.svgIcon}) : super(flex: flex);
+  DeleteButtonConfig({
+    int? flex,
+    this.svgIcon,
+    ButtonColor color = ButtonColor.level3,
+  }) : super(flex: flex, color: color);
 
   /// Optional SVG icon path (relative to assets/images/VirtualKeyboard/).
   final String? svgIcon;
@@ -98,7 +124,11 @@ class DeleteButtonConfig extends KeyboardButtonConfig {
 /// Class representing a button configuration of the Previous Button.
 class PreviousButtonConfig extends KeyboardButtonConfig {
   /// Constructs a [PreviousButtonConfig].
-  PreviousButtonConfig({int? flex, this.svgIcon}) : super(flex: flex);
+  PreviousButtonConfig({
+    int? flex,
+    this.svgIcon,
+    ButtonColor color = ButtonColor.level0,
+  }) : super(flex: flex, color: color);
 
   /// Optional SVG icon path (relative to assets/images/VirtualKeyboard/).
   final String? svgIcon;
@@ -107,7 +137,11 @@ class PreviousButtonConfig extends KeyboardButtonConfig {
 /// Class representing a button configuration of the Next Button.
 class NextButtonConfig extends KeyboardButtonConfig {
   /// Constructs a [NextButtonConfig].
-  NextButtonConfig({int? flex, this.svgIcon}) : super(flex: flex);
+  NextButtonConfig({
+    int? flex,
+    this.svgIcon,
+    ButtonColor color = ButtonColor.level0,
+  }) : super(flex: flex, color: color);
 
   /// Optional SVG icon path (relative to assets/images/VirtualKeyboard/).
   final String? svgIcon;
@@ -116,10 +150,19 @@ class NextButtonConfig extends KeyboardButtonConfig {
 /// Class representing a button configuration of the Submit Button.
 class SubmitButtonConfig extends KeyboardButtonConfig {
   /// Constructs a [SubmitButtonConfig].
-  SubmitButtonConfig({int? flex, this.svgIcon}) : super(flex: flex);
+  SubmitButtonConfig({
+    int? flex,
+    this.svgIcon,
+    this.text = 'SEND',
+    ButtonColor color = ButtonColor.level3,
+  }) : super(flex: flex, color: color);
 
   /// Optional SVG icon path (relative to assets/images/VirtualKeyboard/).
   final String? svgIcon;
+
+  /// Text to display on the submit button (e.g., 'SEND' or 'INVIA').
+  /// Defaults to 'SEND'. When provided, this will be used instead of svgIcon.
+  final String text;
 }
 
 /// Class representing a button configuration for subject selection.
@@ -129,8 +172,11 @@ class SubjectButtonConfig extends KeyboardButtonConfig {
     required this.subject,
     required this.label,
     this.isActive = false,
+    this.svgIcon,
+    this.disabled = false,
     int? flex,
-  }) : super(flex: flex);
+    ButtonColor color = ButtonColor.level0,
+  }) : super(flex: flex, color: color);
 
   /// The subject this button represents.
   final MathSubject subject;
@@ -140,138 +186,78 @@ class SubjectButtonConfig extends KeyboardButtonConfig {
 
   /// Whether this subject is currently active.
   final bool isActive;
+
+  /// Optional SVG icon path (relative to assets/images/VirtualKeyboard/).
+  /// When provided, this will be used instead of the label.
+  final String? svgIcon;
+
+  /// Whether this subject button is disabled.
+  final bool disabled;
 }
 
 /// Class representing a button configuration of the Page Toggle Button.
 class PageButtonConfig extends KeyboardButtonConfig {
   /// Constructs a [PageButtonConfig].
-  const PageButtonConfig({int? flex}) : super(flex: flex);
+  const PageButtonConfig({
+    int? flex,
+    ButtonColor color = ButtonColor.level0,
+  }) : super(flex: flex, color: color);
 }
 
-/// List of keyboard button configs for the digits from 0-9.
-///
-/// List access from 0 to 9 will return the appropriate digit button.
-final _digitButtons = [
-  for (var i = 0; i < 10; i++)
-    BasicKeyboardButtonConfig(
-      label: '$i',
-      value: '$i',
-      keyboardCharacters: ['$i'],
-      svgIcon: '$i.svg',
-    ),
-];
+/// Class representing a button configuration of the System Expressions Button.
+class SystemExpressionsButtonConfig extends KeyboardButtonConfig {
+  /// Constructs a [SystemExpressionsButtonConfig].
+  SystemExpressionsButtonConfig({
+    int? flex,
+    this.svgIcon,
+    ButtonColor color = ButtonColor.level3,
+  }) : super(flex: flex, color: color);
 
-/// Keyboard showing extended functionality.
-final functionKeyboard = [
-  [
-    const BasicKeyboardButtonConfig(
-      label: r'\frac{\Box}{\Box}',
-      value: r'\frac',
-      args: [TeXArg.braces, TeXArg.braces],
-      asTex: true,
-    ),
-    const BasicKeyboardButtonConfig(
-      label: r'\Box^2',
-      value: '^2',
-      args: [TeXArg.braces],
-      asTex: true,
-    ),
-    const BasicKeyboardButtonConfig(
-      label: r'\Box^{\Box}',
-      value: '^',
-      args: [TeXArg.braces],
-      asTex: true,
-      keyboardCharacters: [
-        '^',
-        // This is a workaround for keyboard layout that use ^ as a toggle key.
-        // In that case, "Dead" is reported as the character (e.g. for German
-        // keyboards).
-        'Dead',
-      ],
-    ),
-    const BasicKeyboardButtonConfig(
-      label: r'\sin',
-      value: r'\sin(',
-      asTex: true,
-      keyboardCharacters: ['s'],
-    ),
-    const BasicKeyboardButtonConfig(
-      label: r'\sin^{-1}',
-      value: r'\sin^{-1}(',
-      asTex: true,
-    ),
-  ],
-  [
-    const BasicKeyboardButtonConfig(
-      label: r'\sqrt{\Box}',
-      value: r'\sqrt',
-      args: [TeXArg.braces],
-      asTex: true,
-      keyboardCharacters: ['r'],
-    ),
-    const BasicKeyboardButtonConfig(
-      label: r'\sqrt[\Box]{\Box}',
-      value: r'\sqrt',
-      args: [TeXArg.brackets, TeXArg.braces],
-      asTex: true,
-    ),
-    const BasicKeyboardButtonConfig(
-      label: r'\cos',
-      value: r'\cos(',
-      asTex: true,
-      keyboardCharacters: ['c'],
-    ),
-    const BasicKeyboardButtonConfig(
-      label: r'\cos^{-1}',
-      value: r'\cos^{-1}(',
-      asTex: true,
-    ),
-  ],
-  [
-    const BasicKeyboardButtonConfig(
-      label: r'\log_{\Box}(\Box)',
-      value: r'\log_',
-      asTex: true,
-      args: [TeXArg.braces, TeXArg.parentheses],
-    ),
-    const BasicKeyboardButtonConfig(
-      label: r'\ln(\Box)',
-      value: r'\ln(',
-      asTex: true,
-      keyboardCharacters: ['l'],
-    ),
-    const BasicKeyboardButtonConfig(
-      label: r'\tan',
-      value: r'\tan(',
-      asTex: true,
-      keyboardCharacters: ['t'],
-    ),
-    const BasicKeyboardButtonConfig(
-      label: r'\tan^{-1}',
-      value: r'\tan^{-1}(',
-      asTex: true,
-    ),
-  ],
-  [
-    const PageButtonConfig(flex: 3),
-    const BasicKeyboardButtonConfig(
-      label: '(',
-      value: '(',
-      highlighted: true,
-      keyboardCharacters: ['('],
-      svgIcon: 'l_brace.svg',
-    ),
-    const BasicKeyboardButtonConfig(
-      label: ')',
-      value: ')',
-      highlighted: true,
-      keyboardCharacters: [')'],
-      svgIcon: 'r_brace.svg',
-    ),
-    PreviousButtonConfig(svgIcon: 'previous_char.svg'),
-    NextButtonConfig(svgIcon: 'next_char.svg'),
-    DeleteButtonConfig(svgIcon: 'backspace.svg'),
-  ],
+  /// Optional SVG icon path (relative to assets/images/VirtualKeyboard/).
+  final String? svgIcon;
+}
+
+/// Subject selection row
+final subjectSelectionRow = [
+  const SubjectButtonConfig(
+    subject: MathSubject.general,
+    label: 'GEN',
+    svgIcon: 'operazioni.svg',
+    color: ButtonColor.level0,
+  ),
+  const SubjectButtonConfig(
+    subject: MathSubject.functions,
+    label: 'FUN',
+    svgIcon: 'functions.svg',
+    disabled: true,
+    color: ButtonColor.level0,
+  ),
+  const SubjectButtonConfig(
+    subject: MathSubject.trigonometry,
+    label: 'GEO',
+    svgIcon: 'trigonometry.svg',
+    disabled: true,
+    color: ButtonColor.level0,
+  ),
+  const SubjectButtonConfig(
+    subject: MathSubject.calculus,
+    label: 'TRIG',
+    svgIcon: 'calculus.svg',
+    disabled: true,
+    color: ButtonColor.level0,
+  ),
+  const SubjectButtonConfig(
+    subject: MathSubject.letters,
+    label: 'ABC',
+    disabled: true,
+    color: ButtonColor.level0,
+  ),
+  const SubjectButtonConfig(
+    subject: MathSubject.recents,
+    label: 'Recents',
+    disabled: true,
+    color: ButtonColor.level0,
+  ),
 ];
 
 /// Standard keyboard for math expression input.
@@ -282,9 +268,9 @@ final standardKeyboard = [
       label: 'x',
       value: 'x',
       keyboardCharacters: ['x'],
-      longPressOptions: ['a'], // More options for better testing
+      longPressOptions: ['z', 'y'], // More options for better testing
       svgIcon: 'var_x.svg',
-      highlighted: true,
+      color: ButtonColor.level1,
     ),
     _digitButtons[7],
     _digitButtons[8],
@@ -295,19 +281,20 @@ final standardKeyboard = [
       keyboardCharacters: ['/'],
       args: [TeXArg.braces, TeXArg.braces],
       svgIcon: 'divide.svg',
-      highlighted: true,
+      color: ButtonColor.level2,
     ),
     DeleteButtonConfig(svgIcon: 'backspace.svg'),
   ],
   [
     // Second row - More variables and operations
     const BasicKeyboardButtonConfig(
-      label: 'y',
-      value: 'y',
-      keyboardCharacters: ['y'],
-      longPressOptions: ['b'],
-      svgIcon: 'var_y.svg',
-      highlighted: true,
+      label: '( )',
+      value: '',
+      args: [TeXArg.parentheses],
+      keyboardCharacters: ['p'],
+      longPressOptions: ['[]'],
+      svgIcon: 'parentheses.svg',
+      color: ButtonColor.level1,
     ),
     _digitButtons[4],
     _digitButtons[5],
@@ -317,25 +304,27 @@ final standardKeyboard = [
       value: r'\cdot',
       keyboardCharacters: ['*'],
       svgIcon: 'multiply.svg',
-      highlighted: true,
+      color: ButtonColor.level2,
     ),
+    const BasicKeyboardButtonConfig(
+      label: r'\Box^2',
+      value: '^2',
+      args: [TeXArg.braces],
+      asTex: true,
+      longPressOptions: ['^3'],
+      svgIcon: 'power^2.svg',
+      color: ButtonColor.level1,
+    ),
+  ],
+  [
+    // Third row - Variables and numbers
     const BasicKeyboardButtonConfig(
       label: r'\frac{\Box}{\Box}',
       value: r'\frac',
       args: [TeXArg.braces, TeXArg.braces],
       asTex: true,
       svgIcon: 'fraction.svg',
-    ),
-  ],
-  [
-    // Third row - Variables and numbers
-    const BasicKeyboardButtonConfig(
-      label: 'z',
-      value: 'z',
-      keyboardCharacters: ['z'],
-      longPressOptions: ['c'],
-      svgIcon: 'var_z.svg',
-      highlighted: true,
+      color: ButtonColor.level1,
     ),
     _digitButtons[1],
     _digitButtons[2],
@@ -346,7 +335,7 @@ final standardKeyboard = [
       value: '-',
       keyboardCharacters: ['-'],
       svgIcon: 'subtract.svg',
-      highlighted: true,
+      color: ButtonColor.level2,
     ),
     const BasicKeyboardButtonConfig(
       label: r'\sqrt{\Box}',
@@ -355,56 +344,47 @@ final standardKeyboard = [
       asTex: true,
       svgIcon: 'sqrt.svg',
       keyboardCharacters: ['r'],
+      color: ButtonColor.level1,
     ),
   ],
   [
     // Fourth row - Parentheses and operations
     const BasicKeyboardButtonConfig(
-      label: '(',
-      value: '(',
-      keyboardCharacters: ['('],
-      longPressOptions: ['['],
-      svgIcon: 'l_brace.svg',
-      highlighted: true,
+      label: r'\%',
+      value: r'\%',
+      svgIcon: 'percentuale.svg',
+      color: ButtonColor.level1,
     ),
     const BasicKeyboardButtonConfig(
-      label: ')',
-      value: ')',
-      keyboardCharacters: [')'],
-      longPressOptions: [']'],
-      svgIcon: 'r_brace.svg',
-      highlighted: true,
+      label: ',',
+      value: ',',
+      keyboardCharacters: [','],
+      svgIcon: 'comma.svg',
+      color: ButtonColor.level2,
     ),
     _digitButtons[0],
     const BasicKeyboardButtonConfig(
       label: '=',
       value: '=',
       keyboardCharacters: ['='],
-      longPressOptions: ['≠', '<', '>'],
+      longPressOptions: ['≠', '<', '>', '≤', '≥'],
       svgIcon: 'equal.svg',
-      highlighted: true,
+      color: ButtonColor.level2,
     ),
     const BasicKeyboardButtonConfig(
       label: '+',
       value: '+',
       keyboardCharacters: ['+'],
       svgIcon: 'add.svg',
-      highlighted: true,
+      color: ButtonColor.level2,
     ),
-    const BasicKeyboardButtonConfig(
-      label: r'\Box^2',
-      value: '^2',
-      args: [TeXArg.braces],
-      asTex: true,
-      longPressOptions: ['^3'],
-      svgIcon: 'power^2.svg',
-    ),
+    SystemExpressionsButtonConfig(svgIcon: 'commit.svg'),
   ],
   [
     // Fifth row - Navigation and controls (only 3 buttons, each taking 2 flex)
     PreviousButtonConfig(flex: 2, svgIcon: 'previous_char.svg'),
     NextButtonConfig(flex: 2, svgIcon: 'next_char.svg'),
-    SubmitButtonConfig(flex: 2, svgIcon: 'commit.svg'),
+    SubmitButtonConfig(flex: 2, text: 'SEND'),
   ],
 ];
 
@@ -419,6 +399,7 @@ final numberKeyboard = [
       value: '-',
       keyboardCharacters: ['-'],
       svgIcon: 'subtract.svg',
+      color: ButtonColor.level3,
     )
   ],
   [
@@ -436,153 +417,183 @@ final numberKeyboard = [
     PreviousButtonConfig(svgIcon: 'previous_char.svg'),
     _digitButtons[0],
     NextButtonConfig(svgIcon: 'next_char.svg'),
-    SubmitButtonConfig(svgIcon: 'commit.svg'),
+    SubmitButtonConfig(text: 'SEND'),
   ],
 ];
 
-/// Subject selection row
-final subjectSelectionRow = [
-  const SubjectButtonConfig(subject: MathSubject.algebra, label: 'ALG'),
-  const SubjectButtonConfig(subject: MathSubject.geometry, label: 'GEO'),
-  const SubjectButtonConfig(subject: MathSubject.trigonometry, label: 'TRIG'),
-  const SubjectButtonConfig(subject: MathSubject.calculus, label: 'CALC'),
-  const SubjectButtonConfig(subject: MathSubject.statistics, label: 'STAT'),
-  const SubjectButtonConfig(subject: MathSubject.general, label: 'GEN'),
+/// List access from 0 to 9 will return the appropriate digit button.
+final _digitButtons = [
+  for (var i = 0; i < 10; i++)
+    BasicKeyboardButtonConfig(
+      label: '$i',
+      value: '$i',
+      keyboardCharacters: ['$i'],
+      svgIcon: '$i.svg',
+      color: ButtonColor.level0,
+    ),
 ];
 
-/// Algebra-focused keyboard configuration
-final algebraKeyboard = [
+/// Keyboard showing extended functionality.
+final functionsKeyboard = [
   [
     const BasicKeyboardButtonConfig(
-      label: 'x',
-      value: 'x',
-      keyboardCharacters: ['x'],
-      highlighted: true,
-    ),
-    const BasicKeyboardButtonConfig(
-      label: 'y',
-      value: 'y',
-      keyboardCharacters: ['y'],
-      highlighted: true,
-    ),
-    const BasicKeyboardButtonConfig(
-      label: 'z',
-      value: 'z',
-      keyboardCharacters: ['z'],
-      highlighted: true,
+      label: r'\frac{\Box}{\Box}',
+      value: r'\frac',
+      args: [TeXArg.braces, TeXArg.braces],
+      asTex: true,
+      color: ButtonColor.level0,
     ),
     const BasicKeyboardButtonConfig(
       label: r'\Box^2',
       value: '^2',
       args: [TeXArg.braces],
       asTex: true,
+      color: ButtonColor.level0,
     ),
     const BasicKeyboardButtonConfig(
       label: r'\Box^{\Box}',
       value: '^',
       args: [TeXArg.braces],
       asTex: true,
+      keyboardCharacters: [
+        '^',
+        // This is a workaround for keyboard layout that use ^ as a toggle key.
+        // In that case, "Dead" is reported as the character (e.g. for German
+        // keyboards).
+        'Dead',
+      ],
+      color: ButtonColor.level0,
     ),
-    DeleteButtonConfig(svgIcon: 'backspace.svg'),
+    const BasicKeyboardButtonConfig(
+      label: r'\sin',
+      value: r'\sin(',
+      asTex: true,
+      keyboardCharacters: ['s'],
+      color: ButtonColor.level2,
+    ),
+    const BasicKeyboardButtonConfig(
+      label: r'\sin^{-1}',
+      value: r'\sin^{-1}(',
+      asTex: true,
+      color: ButtonColor.level2,
+    ),
   ],
   [
-    _digitButtons[7],
-    _digitButtons[8],
-    _digitButtons[9],
     const BasicKeyboardButtonConfig(
-      label: '÷',
-      value: r'\frac',
-      keyboardCharacters: ['/'],
-      args: [TeXArg.braces, TeXArg.braces],
-      svgIcon: 'divide.svg',
+      label: r'\sqrt{\Box}',
+      value: r'\sqrt',
+      args: [TeXArg.braces],
+      asTex: true,
+      keyboardCharacters: ['r'],
+      color: ButtonColor.level0,
     ),
+    const BasicKeyboardButtonConfig(
+      label: r'\sqrt[\Box]{\Box}',
+      value: r'\sqrt',
+      args: [TeXArg.brackets, TeXArg.braces],
+      asTex: true,
+      color: ButtonColor.level0,
+    ),
+    const BasicKeyboardButtonConfig(
+      label: r'\cos',
+      value: r'\cos(',
+      asTex: true,
+      keyboardCharacters: ['c'],
+      color: ButtonColor.level2,
+    ),
+    const BasicKeyboardButtonConfig(
+      label: r'\cos^{-1}',
+      value: r'\cos^{-1}(',
+      asTex: true,
+      color: ButtonColor.level2,
+    ),
+  ],
+  [
+    const BasicKeyboardButtonConfig(
+      label: r'\log_{\Box}(\Box)',
+      value: r'\log_',
+      asTex: true,
+      args: [TeXArg.braces, TeXArg.parentheses],
+      color: ButtonColor.level2,
+    ),
+    const BasicKeyboardButtonConfig(
+      label: r'\ln(\Box)',
+      value: r'\ln(',
+      asTex: true,
+      keyboardCharacters: ['l'],
+      color: ButtonColor.level2,
+    ),
+    const BasicKeyboardButtonConfig(
+      label: r'\tan',
+      value: r'\tan(',
+      asTex: true,
+      keyboardCharacters: ['t'],
+      color: ButtonColor.level2,
+    ),
+    const BasicKeyboardButtonConfig(
+      label: r'\tan^{-1}',
+      value: r'\tan^{-1}(',
+      asTex: true,
+      color: ButtonColor.level2,
+    ),
+  ],
+  [
+    const PageButtonConfig(flex: 3),
     const BasicKeyboardButtonConfig(
       label: '(',
       value: '(',
       keyboardCharacters: ['('],
+      svgIcon: 'l_brace.svg',
+      color: ButtonColor.level3,
     ),
     const BasicKeyboardButtonConfig(
       label: ')',
       value: ')',
       keyboardCharacters: [')'],
-    ),
-  ],
-  [
-    _digitButtons[4],
-    _digitButtons[5],
-    _digitButtons[6],
-    const BasicKeyboardButtonConfig(
-      label: '×',
-      value: r'\cdot',
-      keyboardCharacters: ['*'],
-      svgIcon: 'multiply.svg',
-    ),
-    const BasicKeyboardButtonConfig(
-      label: '+',
-      value: '+',
-      keyboardCharacters: ['+'],
-      svgIcon: 'add.svg',
-    ),
-    const BasicKeyboardButtonConfig(
-      label: '−',
-      value: '-',
-      keyboardCharacters: ['-'],
-      svgIcon: 'subtract.svg',
-    ),
-  ],
-  [
-    _digitButtons[1],
-    _digitButtons[2],
-    _digitButtons[3],
-    const BasicKeyboardButtonConfig(
-      label: '=',
-      value: '=',
-      keyboardCharacters: ['='],
+      svgIcon: 'r_brace.svg',
+      color: ButtonColor.level3,
     ),
     PreviousButtonConfig(svgIcon: 'previous_char.svg'),
     NextButtonConfig(svgIcon: 'next_char.svg'),
-  ],
-  [
-    _digitButtons[0],
-    const BasicKeyboardButtonConfig(
-      label: '.',
-      value: '.',
-      keyboardCharacters: ['.'],
-    ),
-    PageButtonConfig(),
-    SubmitButtonConfig(svgIcon: 'commit.svg'),
+    DeleteButtonConfig(svgIcon: 'backspace.svg'),
   ],
 ];
 
-/// Geometry-focused keyboard configuration
-final geometryKeyboard = [
+/// Algebra-focused keyboard configuration
+final algebraKeyboard = [
   [
     const BasicKeyboardButtonConfig(
-      label: r'\pi',
-      value: r'\pi',
+      label: r'\lim(\Box)',
+      value: r'\lim(',
       asTex: true,
+      keyboardCharacters: ['l'],
+      color: ButtonColor.level2,
     ),
     const BasicKeyboardButtonConfig(
-      label: r'\angle',
-      value: r'\angle',
-      asTex: true,
+      label: 'y',
+      value: 'y',
+      keyboardCharacters: ['y'],
+      color: ButtonColor.level3,
     ),
     const BasicKeyboardButtonConfig(
-      label: r'\triangle',
-      value: r'\triangle',
-      asTex: true,
+      label: 'z',
+      value: 'z',
+      keyboardCharacters: ['z'],
+      color: ButtonColor.level3,
     ),
     const BasicKeyboardButtonConfig(
       label: r'\Box^2',
       value: '^2',
       args: [TeXArg.braces],
       asTex: true,
+      color: ButtonColor.level0,
     ),
     const BasicKeyboardButtonConfig(
-      label: r'\sqrt{\Box}',
-      value: r'\sqrt',
+      label: r'\Box^{\Box}',
+      value: '^',
       args: [TeXArg.braces],
       asTex: true,
+      color: ButtonColor.level0,
     ),
     DeleteButtonConfig(svgIcon: 'backspace.svg'),
   ],
@@ -596,16 +607,19 @@ final geometryKeyboard = [
       keyboardCharacters: ['/'],
       args: [TeXArg.braces, TeXArg.braces],
       svgIcon: 'divide.svg',
+      color: ButtonColor.level3,
     ),
     const BasicKeyboardButtonConfig(
       label: '(',
       value: '(',
       keyboardCharacters: ['('],
+      color: ButtonColor.level0,
     ),
     const BasicKeyboardButtonConfig(
       label: ')',
       value: ')',
       keyboardCharacters: [')'],
+      color: ButtonColor.level0,
     ),
   ],
   [
@@ -617,18 +631,21 @@ final geometryKeyboard = [
       value: r'\cdot',
       keyboardCharacters: ['*'],
       svgIcon: 'multiply.svg',
+      color: ButtonColor.level3,
     ),
     const BasicKeyboardButtonConfig(
       label: '+',
       value: '+',
       keyboardCharacters: ['+'],
       svgIcon: 'add.svg',
+      color: ButtonColor.level3,
     ),
     const BasicKeyboardButtonConfig(
       label: '−',
       value: '-',
       keyboardCharacters: ['-'],
       svgIcon: 'subtract.svg',
+      color: ButtonColor.level3,
     ),
   ],
   [
@@ -639,6 +656,121 @@ final geometryKeyboard = [
       label: '=',
       value: '=',
       keyboardCharacters: ['='],
+      color: ButtonColor.level3,
+    ),
+    PreviousButtonConfig(svgIcon: 'previous_char.svg'),
+    SystemExpressionsButtonConfig(svgIcon: 'commit.svg'),
+  ],
+  [
+    _digitButtons[0],
+    const BasicKeyboardButtonConfig(
+      label: '.',
+      value: '.',
+      keyboardCharacters: ['.'],
+      color: ButtonColor.level0,
+    ),
+    PageButtonConfig(),
+    SubmitButtonConfig(text: 'SEND'),
+  ],
+];
+
+/// Geometry-focused keyboard configuration
+final recentsKeyboard = [
+  [
+    const BasicKeyboardButtonConfig(
+      label: r'\pi',
+      value: r'\pi',
+      asTex: true,
+      color: ButtonColor.level2,
+    ),
+    const BasicKeyboardButtonConfig(
+      label: r'\angle',
+      value: r'\angle',
+      asTex: true,
+      color: ButtonColor.level2,
+    ),
+    const BasicKeyboardButtonConfig(
+      label: r'\triangle',
+      value: r'\triangle',
+      asTex: true,
+      color: ButtonColor.level2,
+    ),
+    const BasicKeyboardButtonConfig(
+      label: r'\Box^2',
+      value: '^2',
+      args: [TeXArg.braces],
+      asTex: true,
+      color: ButtonColor.level0,
+    ),
+    const BasicKeyboardButtonConfig(
+      label: r'\sqrt{\Box}',
+      value: r'\sqrt',
+      args: [TeXArg.braces],
+      asTex: true,
+      color: ButtonColor.level0,
+    ),
+    DeleteButtonConfig(svgIcon: 'backspace.svg'),
+  ],
+  [
+    _digitButtons[7],
+    _digitButtons[8],
+    _digitButtons[9],
+    const BasicKeyboardButtonConfig(
+      label: '÷',
+      value: r'\frac',
+      keyboardCharacters: ['/'],
+      args: [TeXArg.braces, TeXArg.braces],
+      svgIcon: 'divide.svg',
+      color: ButtonColor.level3,
+    ),
+    const BasicKeyboardButtonConfig(
+      label: '(',
+      value: '(',
+      keyboardCharacters: ['('],
+      color: ButtonColor.level0,
+    ),
+    const BasicKeyboardButtonConfig(
+      label: ')',
+      value: ')',
+      keyboardCharacters: [')'],
+      color: ButtonColor.level0,
+    ),
+  ],
+  [
+    _digitButtons[4],
+    _digitButtons[5],
+    _digitButtons[6],
+    const BasicKeyboardButtonConfig(
+      label: '×',
+      value: r'\cdot',
+      keyboardCharacters: ['*'],
+      svgIcon: 'multiply.svg',
+      color: ButtonColor.level3,
+    ),
+    const BasicKeyboardButtonConfig(
+      label: '+',
+      value: '+',
+      keyboardCharacters: ['+'],
+      svgIcon: 'add.svg',
+      color: ButtonColor.level3,
+    ),
+    const BasicKeyboardButtonConfig(
+      label: '−',
+      value: '-',
+      keyboardCharacters: ['-'],
+      svgIcon: 'subtract.svg',
+      color: ButtonColor.level3,
+    ),
+  ],
+  [
+    _digitButtons[1],
+    _digitButtons[2],
+    _digitButtons[3],
+    const BasicKeyboardButtonConfig(
+      label: '=',
+      value: '=',
+      keyboardCharacters: ['='],
+      color: ButtonColor.level3,
     ),
     PreviousButtonConfig(svgIcon: 'previous_char.svg'),
     NextButtonConfig(svgIcon: 'next_char.svg'),
@@ -649,9 +781,10 @@ final geometryKeyboard = [
       label: '.',
       value: '.',
       keyboardCharacters: ['.'],
+      color: ButtonColor.level0,
     ),
     PageButtonConfig(),
-    SubmitButtonConfig(svgIcon: 'commit.svg'),
+    SubmitButtonConfig(text: 'SEND'),
   ],
 ];
 
@@ -663,29 +796,34 @@ final trigonometryKeyboard = [
       value: r'\sin',
       args: [TeXArg.parentheses],
       asTex: true,
+      color: ButtonColor.level2,
     ),
     const BasicKeyboardButtonConfig(
       label: r'\cos',
       value: r'\cos',
       args: [TeXArg.parentheses],
       asTex: true,
+      color: ButtonColor.level2,
     ),
     const BasicKeyboardButtonConfig(
       label: r'\tan',
       value: r'\tan',
       args: [TeXArg.parentheses],
       asTex: true,
+      color: ButtonColor.level2,
     ),
     const BasicKeyboardButtonConfig(
       label: r'\pi',
       value: r'\pi',
       asTex: true,
+      color: ButtonColor.level2,
     ),
     const BasicKeyboardButtonConfig(
       label: r'\Box^2',
       value: '^2',
       args: [TeXArg.braces],
       asTex: true,
+      color: ButtonColor.level0,
     ),
     DeleteButtonConfig(svgIcon: 'backspace.svg'),
   ],
@@ -699,16 +837,19 @@ final trigonometryKeyboard = [
       keyboardCharacters: ['/'],
       args: [TeXArg.braces, TeXArg.braces],
       svgIcon: 'divide.svg',
+      color: ButtonColor.level3,
     ),
     const BasicKeyboardButtonConfig(
       label: '(',
       value: '(',
       keyboardCharacters: ['('],
+      color: ButtonColor.level0,
     ),
     const BasicKeyboardButtonConfig(
       label: ')',
       value: ')',
       keyboardCharacters: [')'],
+      color: ButtonColor.level0,
     ),
   ],
   [
@@ -720,18 +861,21 @@ final trigonometryKeyboard = [
       value: r'\cdot',
       keyboardCharacters: ['*'],
       svgIcon: 'multiply.svg',
+      color: ButtonColor.level3,
     ),
     const BasicKeyboardButtonConfig(
       label: '+',
       value: '+',
       keyboardCharacters: ['+'],
       svgIcon: 'add.svg',
+      color: ButtonColor.level3,
     ),
     const BasicKeyboardButtonConfig(
       label: '−',
       value: '-',
       keyboardCharacters: ['-'],
       svgIcon: 'subtract.svg',
+      color: ButtonColor.level3,
     ),
   ],
   [
@@ -742,6 +886,7 @@ final trigonometryKeyboard = [
       label: '=',
       value: '=',
       keyboardCharacters: ['='],
+      color: ButtonColor.level3,
     ),
     PreviousButtonConfig(svgIcon: 'previous_char.svg'),
     NextButtonConfig(svgIcon: 'next_char.svg'),
@@ -752,9 +897,10 @@ final trigonometryKeyboard = [
       label: '.',
       value: '.',
       keyboardCharacters: ['.'],
+      color: ButtonColor.level0,
     ),
     PageButtonConfig(),
-    SubmitButtonConfig(svgIcon: 'commit.svg'),
+    SubmitButtonConfig(text: 'SEND'),
   ],
 ];
 
@@ -765,26 +911,31 @@ final calculusKeyboard = [
       label: r'\frac{d}{dx}',
       value: r'\frac{d}{dx}',
       asTex: true,
+      color: ButtonColor.level2,
     ),
     const BasicKeyboardButtonConfig(
       label: r'\int',
       value: r'\int',
       asTex: true,
+      color: ButtonColor.level2,
     ),
     const BasicKeyboardButtonConfig(
       label: r'\lim',
       value: r'\lim',
       asTex: true,
+      color: ButtonColor.level2,
     ),
     const BasicKeyboardButtonConfig(
       label: r'\sum',
       value: r'\sum',
       asTex: true,
+      color: ButtonColor.level2,
     ),
     const BasicKeyboardButtonConfig(
       label: r'\infty',
       value: r'\infty',
       asTex: true,
+      color: ButtonColor.level2,
     ),
     DeleteButtonConfig(svgIcon: 'backspace.svg'),
   ],
@@ -798,16 +949,19 @@ final calculusKeyboard = [
       keyboardCharacters: ['/'],
       args: [TeXArg.braces, TeXArg.braces],
       svgIcon: 'divide.svg',
+      color: ButtonColor.level3,
     ),
     const BasicKeyboardButtonConfig(
       label: '(',
       value: '(',
       keyboardCharacters: ['('],
+      color: ButtonColor.level0,
     ),
     const BasicKeyboardButtonConfig(
       label: ')',
       value: ')',
       keyboardCharacters: [')'],
+      color: ButtonColor.level0,
     ),
   ],
   [
@@ -819,18 +973,21 @@ final calculusKeyboard = [
       value: r'\cdot',
       keyboardCharacters: ['*'],
       svgIcon: 'multiply.svg',
+      color: ButtonColor.level3,
     ),
     const BasicKeyboardButtonConfig(
       label: '+',
       value: '+',
       keyboardCharacters: ['+'],
       svgIcon: 'add.svg',
+      color: ButtonColor.level3,
     ),
     const BasicKeyboardButtonConfig(
       label: '−',
       value: '-',
       keyboardCharacters: ['-'],
       svgIcon: 'subtract.svg',
+      color: ButtonColor.level3,
     ),
   ],
   [
@@ -841,6 +998,7 @@ final calculusKeyboard = [
       label: '=',
       value: '=',
       keyboardCharacters: ['='],
+      color: ButtonColor.level3,
     ),
     PreviousButtonConfig(svgIcon: 'previous_char.svg'),
     NextButtonConfig(svgIcon: 'next_char.svg'),
@@ -851,40 +1009,46 @@ final calculusKeyboard = [
       label: '.',
       value: '.',
       keyboardCharacters: ['.'],
+      color: ButtonColor.level0,
     ),
     PageButtonConfig(),
-    SubmitButtonConfig(svgIcon: 'commit.svg'),
+    SubmitButtonConfig(text: 'SEND'),
   ],
 ];
 
-/// Statistics-focused keyboard configuration
-final statisticsKeyboard = [
+/// Letters-focused keyboard configuration
+final lettersKeyboard = [
   [
     const BasicKeyboardButtonConfig(
       label: r'\bar{x}',
       value: r'\bar{x}',
       asTex: true,
+      color: ButtonColor.level2,
     ),
     const BasicKeyboardButtonConfig(
       label: r'\sigma',
       value: r'\sigma',
       asTex: true,
+      color: ButtonColor.level2,
     ),
     const BasicKeyboardButtonConfig(
       label: r'\mu',
       value: r'\mu',
       asTex: true,
+      color: ButtonColor.level2,
     ),
     const BasicKeyboardButtonConfig(
       label: r'\sum',
       value: r'\sum',
       asTex: true,
+      color: ButtonColor.level2,
     ),
     const BasicKeyboardButtonConfig(
       label: r'\sqrt{\Box}',
       value: r'\sqrt',
       args: [TeXArg.braces],
       asTex: true,
+      color: ButtonColor.level0,
     ),
     DeleteButtonConfig(svgIcon: 'backspace.svg'),
   ],
@@ -898,16 +1062,19 @@ final statisticsKeyboard = [
       keyboardCharacters: ['/'],
       args: [TeXArg.braces, TeXArg.braces],
       svgIcon: 'divide.svg',
+      color: ButtonColor.level3,
     ),
     const BasicKeyboardButtonConfig(
       label: '(',
       value: '(',
       keyboardCharacters: ['('],
+      color: ButtonColor.level0,
     ),
     const BasicKeyboardButtonConfig(
       label: ')',
       value: ')',
       keyboardCharacters: [')'],
+      color: ButtonColor.level0,
     ),
   ],
   [
@@ -919,18 +1086,21 @@ final statisticsKeyboard = [
       value: r'\cdot',
       keyboardCharacters: ['*'],
       svgIcon: 'multiply.svg',
+      color: ButtonColor.level3,
     ),
     const BasicKeyboardButtonConfig(
       label: '+',
       value: '+',
       keyboardCharacters: ['+'],
       svgIcon: 'add.svg',
+      color: ButtonColor.level3,
     ),
     const BasicKeyboardButtonConfig(
       label: '−',
       value: '-',
       keyboardCharacters: ['-'],
       svgIcon: 'subtract.svg',
+      color: ButtonColor.level3,
     ),
   ],
   [
@@ -941,6 +1111,7 @@ final statisticsKeyboard = [
       label: '=',
       value: '=',
       keyboardCharacters: ['='],
+      color: ButtonColor.level3,
     ),
     PreviousButtonConfig(svgIcon: 'previous_char.svg'),
     NextButtonConfig(svgIcon: 'next_char.svg'),
@@ -951,20 +1122,21 @@ final statisticsKeyboard = [
       label: '.',
       value: '.',
       keyboardCharacters: ['.'],
+      color: ButtonColor.level0,
     ),
     PageButtonConfig(),
-    SubmitButtonConfig(svgIcon: 'commit.svg'),
+    SubmitButtonConfig(text: 'SEND'),
   ],
 ];
 
 /// Returns the appropriate keyboard layout for the given subject
 Map<MathSubject, List<List<KeyboardButtonConfig>>> getSubjectKeyboards() {
   return {
-    MathSubject.algebra: algebraKeyboard,
-    MathSubject.geometry: geometryKeyboard,
+    MathSubject.functions: functionsKeyboard,
     MathSubject.trigonometry: trigonometryKeyboard,
     MathSubject.calculus: calculusKeyboard,
-    MathSubject.statistics: statisticsKeyboard,
+    MathSubject.letters: lettersKeyboard,
+    MathSubject.recents: recentsKeyboard,
     MathSubject.general: standardKeyboard,
   };
 }

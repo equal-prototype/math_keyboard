@@ -4,9 +4,11 @@ import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:math_keyboard/src/custom_key_icons/custom_key_icons.dart';
 import 'package:math_keyboard/src/foundation/keyboard_button.dart';
+import 'package:math_keyboard/src/foundation/node.dart';
 import 'package:math_keyboard/src/widgets/decimal_separator.dart';
 import 'package:math_keyboard/src/widgets/math_field.dart';
 import 'package:math_keyboard/src/widgets/view_insets.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 /// Class representing a button option for long press menus.
 class ButtonOption {
@@ -54,6 +56,7 @@ class MathKeyboard extends StatefulWidget {
       right: 4,
     ),
     this.initialSubject = MathSubject.general,
+    this.submitButtonText = 'SEND',
   }) : super(key: key);
 
   /// The controller for editing the math field.
@@ -89,6 +92,11 @@ class MathKeyboard extends StatefulWidget {
 
   /// The initial subject to display.
   final MathSubject initialSubject;
+
+  /// Text to display on the submit button.
+  ///
+  /// Defaults to 'SEND'. Use 'INVIA' for Italian or other localized text.
+  final String submitButtonText;
 
   @override
   State<MathKeyboard> createState() => _MathKeyboardState();
@@ -165,10 +173,11 @@ class _MathKeyboardState extends State<MathKeyboard> {
                                 page2:
                                     widget.type == MathKeyboardType.numberOnly
                                         ? null
-                                        : functionKeyboard,
+                                        : functionsKeyboard,
                                 onSubmit: widget.onSubmit,
                                 currentSubject: _currentSubject,
                                 onSubjectChanged: _onSubjectChanged,
+                                submitButtonText: widget.submitButtonText,
                               ),
                             ),
                           ],
@@ -243,10 +252,16 @@ class _SubjectButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDisabled = config.disabled;
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 2),
       decoration: BoxDecoration(
-        color: isActive ? const Color(0xFF09162E) : const Color(0xFFF2F4F8),
+        color: isDisabled
+            ? const Color(0xFFE0E0E0)
+            : isActive
+                ? const Color(0xFF122B5A)
+                : const Color(0xFFF2F4F8),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -259,18 +274,36 @@ class _SubjectButton extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: onTap,
+          onTap: isDisabled ? null : onTap,
           borderRadius: BorderRadius.circular(6),
           child: Container(
             alignment: Alignment.center,
-            child: Text(
-              config.label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: isActive ? Colors.white : Colors.black87,
-              ),
-            ),
+            child: config.svgIcon != null
+                ? SvgPicture.asset(
+                    'assets/images/VirtualKeyboard/${config.svgIcon!}',
+                    width: 20,
+                    height: 20,
+                    colorFilter: ColorFilter.mode(
+                      isDisabled
+                          ? Colors.grey.shade400
+                          : isActive
+                              ? Colors.white
+                              : Colors.black87,
+                      BlendMode.srcIn,
+                    ),
+                  )
+                : Text(
+                    config.label,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: isDisabled
+                          ? Colors.grey.shade400
+                          : isActive
+                              ? Colors.white
+                              : Colors.black87,
+                    ),
+                  ),
           ),
         ),
       ),
@@ -415,6 +448,7 @@ class _KeyboardBodyState extends State<_KeyboardBody> {
 // }
 
 /// Widget displaying the buttons.
+/// Widget displaying the buttons.
 class _Buttons extends StatelessWidget {
   /// Constructs a [_Buttons] Widget.
   const _Buttons({
@@ -425,6 +459,7 @@ class _Buttons extends StatelessWidget {
     this.onSubmit,
     this.currentSubject,
     this.onSubjectChanged,
+    this.submitButtonText = 'SEND',
   }) : super(key: key);
 
   /// The editing controller for the math field that the variables are connected
@@ -447,6 +482,9 @@ class _Buttons extends StatelessWidget {
 
   /// Callback for when subject changes.
   final ValueChanged<MathSubject>? onSubjectChanged;
+
+  /// Text to display on the submit button.
+  final String submitButtonText;
 
   @override
   Widget build(BuildContext context) {
@@ -478,12 +516,14 @@ class _Buttons extends StatelessWidget {
                                     )
                                 : () => controller.addLeaf(config.value),
                             asTex: config.asTex,
-                            highlightLevel: config.highlighted ? 1 : 0,
+                            colorLevel:
+                                _getColorLevelFromButtonColor(config.color),
                             longPressOptions: config.longPressOptions
                                 ?.map((option) => ButtonOption(
                                       label: option,
                                       value: option,
-                                      onTap: () => controller.addLeaf(option),
+                                      onTap: () => _handleLongPressOption(
+                                          controller, option),
                                     ))
                                 .toList(),
                           )
@@ -494,7 +534,8 @@ class _Buttons extends StatelessWidget {
                             svgIcon: config.svgIcon,
                             iconSize: 25,
                             onTap: () => controller.goBack(deleteMode: true),
-                            highlightLevel: 2, // Same as submit button
+                            colorLevel:
+                                _getColorLevelFromButtonColor(config.color),
                           )
                         else if (config is PageButtonConfig)
                           _BasicButton(
@@ -504,7 +545,8 @@ class _Buttons extends StatelessWidget {
                                 : CustomKeyIcons.key_symbols,
                             label: controller.secondPage ? '123' : null,
                             onTap: controller.togglePage,
-                            highlightLevel: 1,
+                            colorLevel:
+                                _getColorLevelFromButtonColor(config.color),
                           )
                         else if (config is PreviousButtonConfig)
                           _NavigationButton(
@@ -512,6 +554,8 @@ class _Buttons extends StatelessWidget {
                             icon: Icons.chevron_left_rounded,
                             svgIcon: config.svgIcon,
                             onTap: controller.goBack,
+                            colorLevel:
+                                _getColorLevelFromButtonColor(config.color),
                           )
                         else if (config is NextButtonConfig)
                           _NavigationButton(
@@ -519,14 +563,29 @@ class _Buttons extends StatelessWidget {
                             icon: Icons.chevron_right_rounded,
                             svgIcon: config.svgIcon,
                             onTap: controller.goNext,
+                            colorLevel:
+                                _getColorLevelFromButtonColor(config.color),
                           )
                         else if (config is SubmitButtonConfig)
                           _NavigationButton(
                             flex: config.flex,
                             icon: Icons.keyboard_return,
                             svgIcon: config.svgIcon,
+                            text: config.text.isNotEmpty
+                                ? submitButtonText
+                                : null,
                             onTap: onSubmit,
-                            highlightLevel: 2,
+                            colorLevel:
+                                _getColorLevelFromButtonColor(config.color),
+                          )
+                        else if (config is SystemExpressionsButtonConfig)
+                          _NavigationButton(
+                            flex: config.flex,
+                            icon: Icons.code,
+                            svgIcon: config.svgIcon,
+                            onTap: () => _createSystemOfExpressions(controller),
+                            colorLevel:
+                                _getColorLevelFromButtonColor(config.color),
                           )
                         else if (config is SubjectButtonConfig)
                           _SubjectButton(
@@ -543,6 +602,100 @@ class _Buttons extends StatelessWidget {
       ),
     );
   }
+
+  /// Converts ButtonColor enum to integer color level for backwards compatibility
+  int _getColorLevelFromButtonColor(ButtonColor color) {
+    switch (color) {
+      case ButtonColor.level0:
+        return 0;
+      case ButtonColor.level1:
+        return 1;
+      case ButtonColor.level2:
+        return 2;
+      case ButtonColor.level3:
+        return 3;
+    }
+  }
+
+  /// Handles long press options with special support for parentheses.
+  void _handleLongPressOption(
+      MathFieldEditingController controller, String option) {
+    switch (option) {
+      case '[]':
+        controller.addFunction('', [TeXArg.brackets]);
+        break;
+      case '{}':
+        controller.addFunction('', [TeXArg.braces]);
+        break;
+      default:
+        controller.addLeaf(option);
+        break;
+    }
+  }
+
+  /// Creates a system of expressions from existing content.
+  void _createSystemOfExpressions(MathFieldEditingController controller) {
+    // Check if there's any content in the field
+    final currentTex =
+        controller.currentEditingValue(placeholderWhenEmpty: false);
+    if (currentTex.isEmpty) {
+      // If there's no content, do nothing
+      return;
+    }
+
+    // Create a system with the existing content as the first line and empty second line
+    // This matches your original working syntax
+    final systemTex = r'\begin{cases} ' + currentTex + r' \\ {} \end{cases}';
+
+    // Reset the field and insert the system structure
+    controller.root = TeXNode(null);
+    controller.currentNode = controller.root;
+    controller.currentNode.setCursor();
+    controller.addLeaf(systemTex);
+
+    // Navigate to position the cursor inside the {} placeholder
+    // Go back to remove cursor, then navigate to find the empty braces
+    controller.currentNode.removeCursor();
+
+    // Simple approach: move to just before \end{cases}
+    // Since the {} is just before \end{cases}, we can navigate backwards
+    for (int i = controller.currentNode.children.length - 1; i >= 0; i--) {
+      final child = controller.currentNode.children[i];
+      if (child is TeXLeaf) {
+        final expression = child.expression;
+        if (expression.contains(r'{} \end{cases}')) {
+          // Split at the {} to position cursor there
+          final beforeBraces =
+              expression.substring(0, expression.indexOf(r'{} \end{cases}'));
+          final afterBraces = expression
+              .substring(expression.indexOf(r'{} \end{cases}') + 2); // Skip {}
+
+          // Replace this leaf with the part before {}
+          if (beforeBraces.isNotEmpty) {
+            controller.currentNode.children[i] = TeXLeaf(beforeBraces);
+            controller.currentNode.courserPosition = i + 1;
+          } else {
+            controller.currentNode.children.removeAt(i);
+            controller.currentNode.courserPosition = i;
+          }
+
+          // Add the part after {} (which is " \end{cases}")
+          if (afterBraces.isNotEmpty) {
+            controller.currentNode.children.insert(
+                controller.currentNode.courserPosition, TeXLeaf(afterBraces));
+          }
+
+          controller.currentNode.setCursor();
+          return;
+        }
+      }
+    }
+
+    // Fallback: just position before the last element
+    controller.currentNode.courserPosition =
+        controller.currentNode.children.length - 1;
+    controller.currentNode.setCursor();
+  }
 }
 
 /// Widget displaying a single keyboard button.
@@ -557,7 +710,7 @@ class _BasicButton extends StatefulWidget {
     this.onTap,
     this.longPressOptions,
     this.asTex = false,
-    this.highlightLevel = 0,
+    this.colorLevel = 0,
   })  : assert(label != null || icon != null || svgIcon != null),
         super(key: key);
 
@@ -582,8 +735,8 @@ class _BasicButton extends StatefulWidget {
   /// Show label as tex.
   final bool asTex;
 
-  /// Whether this button should be highlighted.
-  final int highlightLevel;
+  /// Color level for this button (0-3).
+  final int colorLevel;
 
   @override
   State<_BasicButton> createState() => _BasicButtonState();
@@ -822,16 +975,8 @@ class _BasicButtonState extends State<_BasicButton> {
       );
     }
 
-    // Determine button color based on highlight level and content
-    Color buttonColor;
-    if (widget.highlightLevel > 1) {
-      buttonColor = const Color(0xFF09162E); // Dark blue for submit
-    } else if (widget.highlightLevel == 1) {
-      buttonColor = const Color(0xFFC1C7CD); // Medium gray for special buttons
-    } else {
-      // Different colors for different button types
-      buttonColor = const Color(0xFFDDE1E6); // Gray for operators
-    }
+    // Determine button color based on color level
+    Color buttonColor = _getButtonColorFromLevel(widget.colorLevel);
 
     // Check if this is a number button (0-9)
     bool isNumberButton =
@@ -916,6 +1061,22 @@ class _BasicButtonState extends State<_BasicButton> {
   }
 }
 
+/// Get color from color level
+Color _getButtonColorFromLevel(int colorLevel) {
+  switch (colorLevel) {
+    case 0:
+      return const Color(0xFFE3E5E8); // level0 - lightest gray
+    case 1:
+      return const Color(0xFFC7CCD1); // level1 - light gray
+    case 2:
+      return const Color(0xFFAEC5EF); // level2 - light blue
+    case 3:
+      return const Color(0xFF122B5A); // level3 - dark blue
+    default:
+      return const Color(0xFFE3E5E8); // Default to level0
+  }
+}
+
 /// Keyboard button for navigation actions.
 class _NavigationButton extends StatelessWidget {
   /// Constructs a [_NavigationButton].
@@ -924,9 +1085,10 @@ class _NavigationButton extends StatelessWidget {
     required this.flex,
     this.icon,
     this.svgIcon,
+    this.text,
     this.iconSize = 36,
     this.onTap,
-    this.highlightLevel = 0,
+    this.colorLevel = 0,
   }) : super(key: key);
 
   /// The flexible flex value.
@@ -938,36 +1100,36 @@ class _NavigationButton extends StatelessWidget {
   /// SVG icon path for this button (relative to assets/images/VirtualKeyboard/).
   final String? svgIcon;
 
+  /// Text to be shown instead of icon.
+  final String? text;
+
   /// The size for the icon.
   final double iconSize;
 
   /// Function used when user holds the button down.
   final VoidCallback? onTap;
 
-  /// Whether this button should be highlighted.
-  final int highlightLevel;
+  /// Color level for this button (0-3).
+  final int colorLevel;
 
   @override
   Widget build(BuildContext context) {
-    // Determine button color and icon color based on highlight level
-    Color buttonColor;
-    Color iconColor;
-
-    if (highlightLevel > 1) {
-      buttonColor = const Color(0xFF09162E); // Dark blue like submit button
-      iconColor = Colors.white;
-    } else if (highlightLevel == 0) {
-      buttonColor =
-          const Color(0xFFDDE1E6); // Same as non-highlighted basic buttons
-      iconColor = Colors.black87;
-    } else {
-      buttonColor =
-          const Color(0xFFB8B8B8); // Default gray for other highlight levels
-      iconColor = Colors.black87;
-    }
+    // Determine button color and icon color based on color level
+    Color buttonColor = _getButtonColorFromLevel(colorLevel);
+    Color iconColor = (colorLevel == 3) ? Colors.white : Colors.black87;
 
     Widget iconWidget;
-    if (svgIcon != null) {
+    if (text != null) {
+      // Use text if provided (for submit button)
+      iconWidget = Text(
+        text!,
+        style: GoogleFonts.ibmPlexMono(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
+        ),
+      );
+    } else if (svgIcon != null) {
       // Use SVG icon if provided
       iconWidget = SvgPicture.asset(
         'assets/images/VirtualKeyboard/$svgIcon',

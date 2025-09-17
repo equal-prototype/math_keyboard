@@ -186,6 +186,7 @@ class _TestExerciseScreenState extends State<TestExerciseScreen> {
             child: MathField(
               controller: _mathController,
               variables: const ['x', 'y', 'z'],
+              submitButtonText: 'INVIA',
               onChanged: (value) {
                 _handleSavedValue(value);
               },
