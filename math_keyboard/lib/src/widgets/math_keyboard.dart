@@ -281,6 +281,7 @@ class _SubjectButton extends StatelessWidget {
             child: config.svgIcon != null
                 ? SvgPicture.asset(
                     'assets/images/VirtualKeyboard/${config.svgIcon!}',
+                    package: 'math_keyboard',
                     width: 20,
                     height: 20,
                     colorFilter: ColorFilter.mode(
