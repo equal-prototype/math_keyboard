@@ -350,9 +350,9 @@ final standardKeyboard = [
   [
     // Fourth row - Parentheses and operations
     const BasicKeyboardButtonConfig(
-      label: r'\%',
-      value: r'\%',
-      svgIcon: 'percentuale.svg',
+      label: r'\Delta',
+      value: r'\Delta',
+      asTex: true,
       color: ButtonColor.level1,
     ),
     const BasicKeyboardButtonConfig(
