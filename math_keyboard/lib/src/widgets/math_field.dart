@@ -880,7 +880,13 @@ class MathFieldEditingController extends ChangeNotifier {
 
   /// Add leaf to the current node.
   void addLeaf(String tex) {
-    currentNode.addTeX(TeXLeaf(tex));
+    // Wrap single letters in braces to prevent issues with TeX commands
+    // like \cdot being concatenated with letters (e.g., \cdotx)
+    String processedTex = tex;
+    if (tex.length == 1 && RegExp(r'[a-zA-Z]').hasMatch(tex)) {
+      processedTex = '{$tex}';
+    }
+    currentNode.addTeX(TeXLeaf(processedTex));
     notifyListeners();
   }
 

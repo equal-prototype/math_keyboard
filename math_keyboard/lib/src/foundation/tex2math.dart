@@ -43,10 +43,12 @@ class TeXParser {
 
     final pi = (string('{') & string(r'\pi') & string('}')).map((a) => math.pi);
     final e = (string('{') & string('e') & string('}')).map((a) => math.e);
-    final variable =
+    final variableWithBraces =
         (string('{') & letter().plus().flatten() & string('}')).pick(1);
+    final singleVariable = letter().map((v) => v);
 
-    final basic = (number | pi | e | variable).map((v) => [v, 'b']);
+    final basic = (number | pi | e | variableWithBraces | singleVariable)
+        .map((v) => [v, 'b']);
 
     final sqrt =
         (string(r'\sqrt') & char('{').and()).map((v) => [r'\sqrt', 'f']);

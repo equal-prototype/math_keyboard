@@ -66,6 +66,15 @@ void main() {
       );
     });
 
+    test('single variables with cdot', () {
+      const tex = r'x\cdotx';
+      const exp = 'x*x';
+      expect(
+        TeXParser(tex).parse().toString(),
+        Parser().parse(exp).toString(),
+      );
+    });
+
     test('implicit3', () {
       const tex = '23^{2}({c})';
       const exp = '23^2*c';
