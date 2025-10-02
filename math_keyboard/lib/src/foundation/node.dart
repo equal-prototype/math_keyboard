@@ -106,7 +106,7 @@ class TeXNode {
     for (int i = 0; i < children.length; i++) {
       final current = children[i].buildString(cursorColor: cursorColor);
       buffer.write(current);
-      
+
       // Add space after TeX commands when followed by letters to prevent
       // concatenation issues like \cdotx
       if (i < children.length - 1) {
@@ -118,13 +118,13 @@ class TeXNode {
     }
     return buffer.toString();
   }
-  
+
   /// Checks if a space is needed between two TeX strings to prevent
   /// invalid concatenation like \cdotx
   bool _needsSpaceBetween(String current, String next) {
     // If current ends with a TeX command (starts with \) and next starts with a letter
-    if (current.contains(r'\') && 
-        next.isNotEmpty && 
+    if (current.contains(r'\') &&
+        next.isNotEmpty &&
         RegExp(r'^[a-zA-Z]').hasMatch(next)) {
       // Check if current ends with a TeX command
       final commandMatch = RegExp(r'\\[a-zA-Z]+$').firstMatch(current);
