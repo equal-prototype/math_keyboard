@@ -120,12 +120,12 @@ class TeXNode {
   }
 
   /// Checks if a space is needed between two TeX strings to prevent
-  /// invalid concatenation like \cdotx
+  /// invalid concatenation like \cdotx or \cdot4 being interpreted as 24
   bool _needsSpaceBetween(String current, String next) {
-    // If current ends with a TeX command (starts with \) and next starts with a letter
+    // If current ends with a TeX command and next starts with a letter or number
     if (current.contains(r'\') &&
         next.isNotEmpty &&
-        RegExp(r'^[a-zA-Z]').hasMatch(next)) {
+        RegExp(r'^[a-zA-Z0-9]').hasMatch(next)) {
       // Check if current ends with a TeX command
       final commandMatch = RegExp(r'\\[a-zA-Z]+$').firstMatch(current);
       if (commandMatch != null) {
