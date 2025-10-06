@@ -85,9 +85,60 @@ class TeXNode {
     if (children[courserPosition] is TeXFunction) {
       return NavigationState.func;
     }
+
+    // Special handling for system structures (\begin{cases}...\end{cases})
+    // If we're about to delete part of a system, delete the entire system instead
+    if (children[courserPosition] is TeXLeaf) {
+      final leaf = children[courserPosition] as TeXLeaf;
+      final expr = leaf.expression;
+
+      // Check if this leaf contains system markers
+      if (expr.contains(r'\begin{cases}') || expr.contains(r'\end{cases}')) {
+        // Find and remove all consecutive leaves that are part of the system
+        _removeSystemStructure(courserPosition);
+        setCursor();
+        return NavigationState.success;
+      }
+    }
+
     children.removeAt(courserPosition);
     setCursor();
     return NavigationState.success;
+  }
+
+  /// Removes an entire system structure when deleting
+  void _removeSystemStructure(int startPosition) {
+    // Look backwards and forwards to find all parts of the system
+    int start = startPosition;
+    int end = startPosition;
+
+    // Find the start of the system
+    for (int i = startPosition; i >= 0; i--) {
+      if (children[i] is TeXLeaf) {
+        final expr = (children[i] as TeXLeaf).expression;
+        if (expr.contains(r'\begin{cases}')) {
+          start = i;
+          break;
+        }
+      }
+    }
+
+    // Find the end of the system
+    for (int i = startPosition; i < children.length; i++) {
+      if (children[i] is TeXLeaf) {
+        final expr = (children[i] as TeXLeaf).expression;
+        if (expr.contains(r'\end{cases}')) {
+          end = i;
+          break;
+        }
+      }
+    }
+
+    // Remove all elements from start to end (inclusive)
+    if (start <= end) {
+      children.removeRange(start, end + 1);
+      courserPosition = start;
+    }
   }
 
   /// Builds the TeX representation of this node.
