@@ -124,6 +124,9 @@ class _MathKeyboardState extends State<MathKeyboard> {
       curve: Curves.ease,
     );
 
+    // Get the safe area bottom inset to account for different navigation methods
+    final safeAreaBottom = MediaQuery.of(context).padding.bottom;
+
     return SlideTransition(
       position: Tween<Offset>(
         begin: const Offset(0, 1),
@@ -135,52 +138,57 @@ class _MathKeyboardState extends State<MathKeyboard> {
             bottom: 0,
             left: 0,
             right: 0,
-            child: Material(
-              type: MaterialType.transparency,
-              child: ColoredBox(
-                color: const Color(0xFFF2F4F8), // Light gray background
-                child: _KeyboardBody(
-                  insetsState: widget.insetsState,
-                  slideAnimation: widget.slideAnimation == null
-                      ? null
-                      : curvedSlideAnimation,
-                  child: Padding(
-                    padding: widget.padding,
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(
-                          maxWidth: 5e2,
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            // Subject selection row
-                            if (widget.type != MathKeyboardType.numberOnly)
-                              _SubjectSelectionRow(
-                                currentSubject: _currentSubject,
-                                onSubjectChanged: _onSubjectChanged,
+            child: Padding(
+              padding: EdgeInsets.only(
+                bottom: safeAreaBottom,
+              ),
+              child: Material(
+                type: MaterialType.transparency,
+                child: ColoredBox(
+                  color: const Color(0xFFF2F4F8), // Light gray background
+                  child: _KeyboardBody(
+                    insetsState: widget.insetsState,
+                    slideAnimation: widget.slideAnimation == null
+                        ? null
+                        : curvedSlideAnimation,
+                    child: Padding(
+                      padding: widget.padding,
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(
+                            maxWidth: 5e2,
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              // Subject selection row
+                              if (widget.type != MathKeyboardType.numberOnly)
+                                _SubjectSelectionRow(
+                                  currentSubject: _currentSubject,
+                                  onSubjectChanged: _onSubjectChanged,
+                                ),
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                  top: 2,
+                                ),
+                                child: _Buttons(
+                                  controller: widget.controller,
+                                  page1: widget.type ==
+                                          MathKeyboardType.numberOnly
+                                      ? numberKeyboard
+                                      : _getKeyboardForSubject(_currentSubject),
+                                  page2:
+                                      widget.type == MathKeyboardType.numberOnly
+                                          ? null
+                                          : functionsKeyboard,
+                                  onSubmit: widget.onSubmit,
+                                  currentSubject: _currentSubject,
+                                  onSubjectChanged: _onSubjectChanged,
+                                  submitButtonText: widget.submitButtonText,
+                                ),
                               ),
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                top: 2,
-                              ),
-                              child: _Buttons(
-                                controller: widget.controller,
-                                page1: widget.type ==
-                                        MathKeyboardType.numberOnly
-                                    ? numberKeyboard
-                                    : _getKeyboardForSubject(_currentSubject),
-                                page2:
-                                    widget.type == MathKeyboardType.numberOnly
-                                        ? null
-                                        : functionsKeyboard,
-                                onSubmit: widget.onSubmit,
-                                currentSubject: _currentSubject,
-                                onSubjectChanged: _onSubjectChanged,
-                                submitButtonText: widget.submitButtonText,
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -489,9 +497,11 @@ class _Buttons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final keyboardHeight = screenHeight * 0.25; // 25% of screen height
+
     return SizedBox(
-      height:
-          265, // Updated height for 5 rows (5 * 44 + padding = 220 + 45 for subject row)
+      height: keyboardHeight,
       child: AnimatedBuilder(
         animation: controller,
         builder: (context, child) {
