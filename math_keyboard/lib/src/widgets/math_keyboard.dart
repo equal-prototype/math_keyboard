@@ -497,11 +497,9 @@ class _Buttons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final keyboardHeight = screenHeight * 0.25; // 25% of screen height
-
     return SizedBox(
-      height: keyboardHeight,
+      height:
+          265, // Updated height for 5 rows (5 * 44 + padding = 220 + 45 for subject row)
       child: AnimatedBuilder(
         animation: controller,
         builder: (context, child) {
