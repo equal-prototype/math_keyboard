@@ -12,50 +12,45 @@ class TestExerciseScreen extends StatefulWidget {
 class _TestExerciseScreenState extends State<TestExerciseScreen> {
   final MathFieldEditingController _mathController =
       MathFieldEditingController();
+  final FocusNode _focusNode = FocusNode();
 
   bool _loading = false;
-  bool _showConfirmModal = false;
   String _savedValue = '';
-  String _printedValue = '';
-  String _errorMessage = '';
 
   @override
   void dispose() {
     _mathController.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
-  void _handleSavedValue(String userInput) {
-    // Remove trailing semicolon if present
-    final cleanedInput = userInput.replaceAll(RegExp(r';+\s*$'), '');
+  void _handleMathStep(String value) {
+    print('Math step submitted: $value');
     setState(() {
-      _savedValue = cleanedInput;
+      _savedValue = value;
     });
-  }
-
-  void _handlePrintedValue(String userInput) {
-    setState(() {
-      _printedValue = userInput;
-      _showConfirmModal = true;
-    });
-  }
-
-  void _handleChange() {
-    setState(() {
-      _mathController.updateValue(TeXParser(_printedValue).parse());
-      _showConfirmModal = false;
-    });
-  }
-
-  void _handleCreateExercise() {
-    print('Creating exercise: $_savedValue');
-    setState(() {
-      _showConfirmModal = false;
-      _errorMessage = '';
-    });
-    // Here you can add your exercise creation logic
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Exercise created: $_savedValue')),
+      SnackBar(content: Text('Submitted: $value')),
+    );
+  }
+
+  void _handleResumeLastText() {
+    print('Resume last text pressed');
+    // Simulate resume behavior
+    if (_savedValue.isNotEmpty) {
+      _mathController.updateValue(TeXParser(_savedValue).parse());
+    }
+  }
+
+  void _handleWriteFromScratch() {
+    print('Write from scratch pressed');
+    _mathController.clear();
+  }
+
+  void _showExerciseModal(String modalType) {
+    print('Modal requested: $modalType');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Modal: $modalType')),
     );
   }
 
@@ -65,46 +60,56 @@ class _TestExerciseScreenState extends State<TestExerciseScreen> {
       return _buildLoadingPage();
     }
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFEBF1FF),
-      body: Stack(
-        children: [
-          Column(
-            children: [
-              // Header with title
-              _buildHeader(),
+    return MathKeyboardViewInsets(
+      child: Builder(
+        builder: (context) {
+          // Get the actual math keyboard height using the proper API
+          final keyboardHeight =
+              MathKeyboardViewInsetsQuery.of(context).bottomInset;
 
-              // Main content
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildExerciseBox(),
-                        if (_errorMessage.isNotEmpty) ...[
-                          const SizedBox(height: 20),
-                          _buildErrorMessage(),
-                        ],
-                      ],
+          return Scaffold(
+            backgroundColor: const Color(0xFFF2F4F8),
+            resizeToAvoidBottomInset: false,
+            body: SafeArea(
+              child: Stack(
+                children: [
+                  // Main content - now receives keyboard height
+                  Positioned(
+                    top: 100, // Fixed header height
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: _buildMainContent(keyboardHeight),
+                  ),
+
+                  // Header
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    child: Material(
+                      elevation: 15,
+                      type: MaterialType.card,
+                      shadowColor: Colors.black.withOpacity(0.0),
+                      child: Container(
+                        decoration:
+                            const BoxDecoration(color: Color(0xFFF2F4F8)),
+                        child: _buildHeader(),
+                      ),
                     ),
                   ),
-                ),
+                ],
               ),
-            ],
-          ),
-
-          // Modals
-          if (_showConfirmModal) _buildConfirmationModal(),
-        ],
+            ),
+          );
+        },
       ),
     );
   }
 
   Widget _buildLoadingPage() {
     return const Scaffold(
-      backgroundColor: Color(0xFFEBF1FF),
+      backgroundColor: Color(0xFFF2F4F8),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -128,102 +133,192 @@ class _TestExerciseScreenState extends State<TestExerciseScreen> {
     return Container(
       width: double.infinity,
       height: 100,
-      color: const Color(0xFFEBF1FF),
-      child: SafeArea(
-        child: Center(
+      color: const Color(0xFFF2F4F8),
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Text(
-            'Math Keyboard Test',
+            'Test Exercise Screen',
             style: GoogleFonts.ibmPlexMono(
               fontSize: 20,
-              fontWeight: FontWeight.w500,
-              color: const Color(0xFF7349F2),
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF09162E),
             ),
+            textAlign: TextAlign.center,
           ),
         ),
       ),
     );
   }
 
-  Widget _buildExerciseBox() {
+  Widget _buildMainContent(double keyboardHeight) {
+    // Calculate button heights
+    const stepButtonsHeight = 56.0;
+    const resumeButtonsHeight = 48.0;
+    const mathFieldHeight = 150.0; // Fixed height for math field
+    const topButtonsHeight = 56.0; // Height for "Nuovo Foglio" button area
+    const spacing = 8.0;
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      height: double.infinity,
+      decoration: const BoxDecoration(color: Colors.white),
+      child: Stack(
         children: [
-          Text(
-            'New Exercise',
-            style: GoogleFonts.ibmPlexMono(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF7349F2),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Math input field
-          Container(
-            width: double.infinity,
-            height: 120,
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: const Color(0xFF7349F2).withOpacity(0.3),
+          // Top buttons row - fixed at top
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: topButtonsHeight,
+            child: Padding(
+              padding: const EdgeInsets.only(
+                left: 8,
+                right: 8,
+                top: 8,
               ),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: MathField(
-              controller: _mathController,
-              variables: const ['x', 'y', 'z'],
-              submitButtonText: 'INVIA',
-              onChanged: (value) {
-                _handleSavedValue(value);
-              },
-              onSubmitted: (value) {
-                _handlePrintedValue(value);
-              },
-              decoration: const InputDecoration(
-                border: InputBorder.none,
-                hintText: 'Enter your mathematical expression...',
+              child: Row(
+                children: [
+                  // Spazio a sinistra (2/3 della larghezza)
+                  Expanded(flex: 2, child: Container()),
+                  // Pulsante "Nuovo Foglio" (1/3 della larghezza)
+                  Expanded(
+                    flex: 1,
+                    child: _buildNewSheetButton(),
+                  ),
+                ],
               ),
             ),
           ),
 
-          const SizedBox(height: 16),
+          // Math field - anchored above resume buttons
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: keyboardHeight +
+                stepButtonsHeight +
+                resumeButtonsHeight +
+                spacing,
+            height: mathFieldHeight,
+            child: Container(
+              width: MediaQuery.of(context).size.width,
+              decoration: const BoxDecoration(color: Colors.white),
+              padding: const EdgeInsets.only(
+                left: 8,
+                right: 16,
+                top: 16,
+                bottom: 16,
+              ),
+              child: Theme(
+                data: Theme.of(context).copyWith(
+                  textSelectionTheme: const TextSelectionThemeData(
+                    cursorColor: Colors.black,
+                  ),
+                ),
+                child: GestureDetector(
+                  onTap: () {
+                    _focusNode.requestFocus();
+                  },
+                  child: MathField(
+                    textAlignHorizontal: TextAlignHorizontal.right,
+                    controller: _mathController,
+                    focusNode: _focusNode,
+                    submitButtonText: 'INVIA',
+                    fontSize: 36,
+                    onSubmitted: (value) {
+                      _handleMathStep(value);
+                    },
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
 
-          // Submit button
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton(
-              onPressed: _savedValue.isNotEmpty
-                  ? () => _handlePrintedValue(_savedValue)
-                  : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF7349F2),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+          // Resume/Write from scratch buttons - anchored above step buttons
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: keyboardHeight + stepButtonsHeight + spacing,
+            child: Padding(
+              padding: const EdgeInsets.only(
+                left: 8,
+                right: 8,
+              ),
+              child: Container(
+                width: double.infinity,
+                height: resumeButtonsHeight,
+                color: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    GestureDetector(
+                      onTap: _handleResumeLastText,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.refresh,
+                            color: const Color(0xFF7349F2),
+                            size: 16,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'RIPRENDI ULTIMO TESTO',
+                            style: GoogleFonts.ibmPlexMono(
+                              fontWeight: FontWeight.w500,
+                              fontSize: 14,
+                              height: 16 / 12,
+                              letterSpacing: 0.0,
+                              color: const Color(0xFF7349F2),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: SizedBox(
+                        height: 18,
+                        child: VerticalDivider(
+                          color: const Color(0xFF09162E),
+                          thickness: 1,
+                        ),
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: _handleWriteFromScratch,
+                      child: Text(
+                        'SCRIVI DA ZERO',
+                        style: GoogleFonts.ibmPlexMono(
+                          fontWeight: FontWeight.w500,
+                          fontSize: 14,
+                          height: 16 / 12,
+                          letterSpacing: 0.0,
+                          color: const Color(0xFF09162E),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              child: Text(
-                "Let's Solve It!",
-                style: GoogleFonts.ibmPlexMono(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+            ),
+          ),
+
+          // StepButtons - anchored directly above keyboard
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: keyboardHeight,
+            child: Container(
+              height: stepButtonsHeight,
+              color: const Color(0xFFF2F4F8),
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _buildStepButtons(),
             ),
           ),
         ],
@@ -231,112 +326,99 @@ class _TestExerciseScreenState extends State<TestExerciseScreen> {
     );
   }
 
-  Widget _buildErrorMessage() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.red.shade50,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.red.shade200),
+  Widget _buildNewSheetButton() {
+    return ElevatedButton.icon(
+      onPressed: () {
+        print('Nuovo Foglio button pressed');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Nuovo Foglio pressed')),
+        );
+      },
+      icon: Icon(Icons.add, size: 20, color: const Color(0xFF09162E)),
+      label: Text(
+        'Nuovo Foglio',
+        style: GoogleFonts.ibmPlexMono(
+          fontSize: 12,
+          fontWeight: FontWeight.w400,
+          height: 16 / 12,
+          letterSpacing: 0.0,
+          color: const Color(0xFF09162E),
+        ),
       ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.white,
+        foregroundColor: const Color(0xFF09162E),
+        elevation: 0,
+        side: const BorderSide(
+          color: Color(0xFF09162E),
+          width: 1,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        padding: const EdgeInsets.only(left: 8),
+        alignment: Alignment.centerLeft,
+      ),
+    );
+  }
+
+  Widget _buildStepButtons() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          Icon(Icons.error_outline, color: Colors.red.shade600, size: 20),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              _errorMessage,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.red.shade600,
-              ),
-            ),
+          _buildStepButton(
+            icon: Icons.lightbulb_outline,
+            label: 'Suggerimento',
+            onPressed: () => _showExerciseModal('suggestion'),
+          ),
+          _buildStepButton(
+            icon: Icons.bookmark_outline,
+            label: 'Esempio',
+            onPressed: () => _showExerciseModal('example'),
+          ),
+          _buildStepButton(
+            icon: Icons.check_circle_outline,
+            label: 'Soluzione',
+            onPressed: () => _showExerciseModal('solution'),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildConfirmationModal() {
-    return Container(
-      color: Colors.black.withOpacity(0.5),
-      child: Center(
-        child: Container(
-          margin: const EdgeInsets.all(20),
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
+  Widget _buildStepButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onPressed,
+  }) {
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: ElevatedButton(
+          onPressed: onPressed,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFFF2F4F8),
+            foregroundColor: const Color(0xFF09162E),
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(0),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 12),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              Icon(icon, size: 20),
+              const SizedBox(height: 2),
               Text(
-                'Confirm Exercise',
+                label,
                 style: GoogleFonts.ibmPlexMono(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFF7349F2),
+                  fontSize: 10,
+                  fontWeight: FontWeight.w400,
                 ),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF4F0FE),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  _printedValue,
-                  style: const TextStyle(fontSize: 18),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: _handleChange,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey.shade200,
-                        foregroundColor: Colors.black87,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: Text(
-                        'Needs Correction',
-                        style: GoogleFonts.ibmPlexMono(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: _handleCreateExercise,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF7349F2),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: Text(
-                        "Let's Solve It!",
-                        style: GoogleFonts.ibmPlexMono(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                textAlign: TextAlign.center,
               ),
             ],
           ),

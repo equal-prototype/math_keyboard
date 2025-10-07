@@ -124,9 +124,6 @@ class _MathKeyboardState extends State<MathKeyboard> {
       curve: Curves.ease,
     );
 
-    // Get the safe area bottom inset to account for different navigation methods
-    final safeAreaBottom = MediaQuery.of(context).padding.bottom;
-
     return SlideTransition(
       position: Tween<Offset>(
         begin: const Offset(0, 1),
@@ -139,8 +136,8 @@ class _MathKeyboardState extends State<MathKeyboard> {
             left: 0,
             right: 0,
             child: Padding(
-              padding: EdgeInsets.only(
-                bottom: safeAreaBottom,
+              padding: const EdgeInsets.only(
+                bottom: 10,
               ),
               child: Material(
                 type: MaterialType.transparency,
