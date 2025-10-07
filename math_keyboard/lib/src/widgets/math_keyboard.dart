@@ -9,6 +9,7 @@ import 'package:math_keyboard/src/widgets/decimal_separator.dart';
 import 'package:math_keyboard/src/widgets/math_field.dart';
 import 'package:math_keyboard/src/widgets/view_insets.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:math_keyboard/src/responsive_utils.dart';
 
 /// Class representing a button option for long press menus.
 class ButtonOption {
@@ -218,8 +219,9 @@ class _SubjectSelectionRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 48,
-      margin: const EdgeInsets.only(bottom: 2),
+      height: ResponsiveUtils.responsiveHeightFromPx(context, 48),
+      margin: EdgeInsets.only(
+          bottom: ResponsiveUtils.responsivePaddingFromPx(context, 2)),
       decoration: const BoxDecoration(
         color: Colors.white, // Sfondo bianco per i bottoni dei soggetti
       ),
@@ -259,19 +261,22 @@ class _SubjectButton extends StatelessWidget {
     final isDisabled = config.disabled;
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 2),
+      margin: EdgeInsets.symmetric(
+          horizontal: ResponsiveUtils.responsivePaddingFromPx(context, 2)),
       decoration: BoxDecoration(
         color: isDisabled
             ? const Color(0xFFE0E0E0)
             : isActive
                 ? const Color(0xFF122B5A)
                 : const Color(0xFFF2F4F8),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(
+            ResponsiveUtils.responsivePaddingFromPx(context, 20)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
-            blurRadius: 1,
-            offset: const Offset(0, 1),
+            blurRadius: ResponsiveUtils.responsivePaddingFromPx(context, 1),
+            offset:
+                Offset(0, ResponsiveUtils.responsivePaddingFromPx(context, 1)),
           ),
         ],
       ),
@@ -279,15 +284,16 @@ class _SubjectButton extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: isDisabled ? null : onTap,
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(
+              ResponsiveUtils.responsivePaddingFromPx(context, 6)),
           child: Container(
             alignment: Alignment.center,
             child: config.svgIcon != null
                 ? SvgPicture.asset(
                     'assets/images/VirtualKeyboard/${config.svgIcon!}',
                     package: 'math_keyboard',
-                    width: 20,
-                    height: 20,
+                    width: ResponsiveUtils.responsiveWidthFromPx(context, 20),
+                    height: ResponsiveUtils.responsiveHeightFromPx(context, 20),
                     colorFilter: ColorFilter.mode(
                       isDisabled
                           ? Colors.grey.shade400
@@ -300,7 +306,8 @@ class _SubjectButton extends StatelessWidget {
                 : Text(
                     config.label,
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize:
+                          ResponsiveUtils.responsiveFontSizeFromPx(context, 12),
                       fontWeight: FontWeight.w600,
                       color: isDisabled
                           ? Colors.grey.shade400
@@ -493,8 +500,8 @@ class _Buttons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final keyboardHeight = screenHeight * 0.26; // 26% of screen height
+    final keyboardHeight = ResponsiveUtils.responsiveHeightFromPx(
+        context, 240); // Approximately 26% of a standard screen
 
     return SizedBox(
       height: keyboardHeight,
@@ -507,7 +514,7 @@ class _Buttons extends StatelessWidget {
             children: [
               for (final row in layout)
                 SizedBox(
-                  height: 44,
+                  height: ResponsiveUtils.responsiveHeightFromPx(context, 44),
                   child: Row(
                     children: [
                       for (final config in row)
@@ -797,8 +804,10 @@ class _BasicButtonState extends State<_BasicButton> {
     final Size buttonSize = renderBox.size;
 
     // Calculate which option is being hovered
-    const double popupWidth = 120.0; // Match the popup width
-    const double itemHeight = 50.0; // Match the item height
+    final double popupWidth = ResponsiveUtils.responsiveWidthFromPx(
+        context, 120); // Match the popup width
+    final double itemHeight = ResponsiveUtils.responsiveHeightFromPx(
+        context, 50); // Match the item height
     final double popupLeft =
         buttonOffset.dx + (buttonSize.width - popupWidth) / 2;
     final double popupTop =
@@ -865,16 +874,20 @@ class _BasicButtonState extends State<_BasicButton> {
     final Size size = renderBox.size;
 
     // Calculate popup width (make it more square-like)
-    const double popupWidth = 60.0; // Increased width for better visibility
-    const double itemHeight = 50.0; // Increased height for easier touch
+    final double popupWidth = ResponsiveUtils.responsiveWidthFromPx(
+        context, 60); // Increased width for better visibility
+    final double itemHeight = ResponsiveUtils.responsiveHeightFromPx(
+        context, 50); // Increased height for easier touch
     final double totalHeight = widget.longPressOptions!.length * itemHeight;
 
     _overlayEntry = OverlayEntry(
       builder: (context) => Positioned(
         left: offset.dx + (size.width - popupWidth) / 2,
-        top: offset.dy - totalHeight - 8,
+        top: offset.dy -
+            totalHeight -
+            ResponsiveUtils.responsivePaddingFromPx(context, 8),
         child: Material(
-          elevation: 8,
+          elevation: ResponsiveUtils.responsivePaddingFromPx(context, 8),
           child: Container(
             width: popupWidth,
             decoration: BoxDecoration(
@@ -882,8 +895,10 @@ class _BasicButtonState extends State<_BasicButton> {
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.2),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
+                  blurRadius:
+                      ResponsiveUtils.responsivePaddingFromPx(context, 8),
+                  offset: Offset(
+                      0, ResponsiveUtils.responsivePaddingFromPx(context, 2)),
                 ),
               ],
             ),
@@ -904,13 +919,17 @@ class _BasicButtonState extends State<_BasicButton> {
                             .withOpacity(0.3) // More visible selection
                         : Colors.transparent,
                     border: isSelected
-                        ? Border.all(color: const Color(0xFF7349F2), width: 2)
+                        ? Border.all(
+                            color: const Color(0xFF7349F2),
+                            width: ResponsiveUtils.responsivePaddingFromPx(
+                                context, 2))
                         : null,
                   ),
                   child: Text(
                     option.label,
                     style: TextStyle(
-                      fontSize: 18, // Increased font size
+                      fontSize: ResponsiveUtils.responsiveFontSizeFromPx(
+                          context, 18), // Increased font size
                       fontWeight: FontWeight.w600, // Bolder text
                       color:
                           isSelected ? const Color(0xFF7349F2) : Colors.black87,
@@ -943,8 +962,8 @@ class _BasicButtonState extends State<_BasicButton> {
       result = SvgPicture.asset(
         'assets/images/VirtualKeyboard/${widget.svgIcon}',
         package: 'math_keyboard',
-        width: 24,
-        height: 24,
+        width: ResponsiveUtils.responsiveWidthFromPx(context, 24),
+        height: ResponsiveUtils.responsiveHeightFromPx(context, 24),
         colorFilter: const ColorFilter.mode(
           Colors.black87,
           BlendMode.srcIn,
@@ -954,13 +973,13 @@ class _BasicButtonState extends State<_BasicButton> {
       result = Icon(
         widget.icon,
         color: Colors.white,
-        size: 20,
+        size: ResponsiveUtils.responsiveWidthFromPx(context, 20),
       );
     } else if (widget.asTex) {
       result = Math.tex(
         widget.label!,
         options: MathOptions(
-          fontSize: 20,
+          fontSize: ResponsiveUtils.responsiveFontSizeFromPx(context, 20),
           color: Colors.black87,
         ),
       );
@@ -974,8 +993,8 @@ class _BasicButtonState extends State<_BasicButton> {
 
       result = Text(
         symbol!,
-        style: const TextStyle(
-          fontSize: 20,
+        style: TextStyle(
+          fontSize: ResponsiveUtils.responsiveFontSizeFromPx(context, 20),
           fontWeight: FontWeight.w500,
           color: Colors.black87,
         ),
@@ -990,14 +1009,20 @@ class _BasicButtonState extends State<_BasicButton> {
         widget.label != null && RegExp(r'^[0-9]$').hasMatch(widget.label!);
 
     Widget buttonWidget = Container(
-      margin: const EdgeInsets.fromLTRB(2, 2, 2, 2),
+      margin: EdgeInsets.fromLTRB(
+        ResponsiveUtils.responsivePaddingFromPx(context, 2),
+        ResponsiveUtils.responsivePaddingFromPx(context, 2),
+        ResponsiveUtils.responsivePaddingFromPx(context, 2),
+        ResponsiveUtils.responsivePaddingFromPx(context, 2),
+      ),
       decoration: BoxDecoration(
         color: buttonColor,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
-            blurRadius: 2,
-            offset: const Offset(0, 1),
+            blurRadius: ResponsiveUtils.responsivePaddingFromPx(context, 2),
+            offset:
+                Offset(0, ResponsiveUtils.responsivePaddingFromPx(context, 1)),
           ),
         ],
       ),
@@ -1008,15 +1033,17 @@ class _BasicButtonState extends State<_BasicButton> {
                   widget.longPressOptions!.isNotEmpty)
               ? null // Disable tap if there are long press options
               : widget.onTap,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(
+              ResponsiveUtils.responsivePaddingFromPx(context, 8)),
           child: Stack(
             children: [
               Container(
                 alignment: Alignment.center,
                 child: isNumberButton
                     ? Container(
-                        margin: const EdgeInsets.all(
-                            1), // 1px margin from button edge
+                        margin: EdgeInsets.all(
+                            ResponsiveUtils.responsivePaddingFromPx(
+                                context, 1)), // 1px margin from button edge
                         decoration: const BoxDecoration(
                           color: Colors.white,
                           shape: BoxShape.circle,
@@ -1032,11 +1059,11 @@ class _BasicButtonState extends State<_BasicButton> {
               if (widget.longPressOptions != null &&
                   widget.longPressOptions!.isNotEmpty)
                 Positioned(
-                  top: 6,
-                  right: 6,
+                  top: ResponsiveUtils.responsivePaddingFromPx(context, 6),
+                  right: ResponsiveUtils.responsivePaddingFromPx(context, 6),
                   child: Container(
-                    width: 6,
-                    height: 6,
+                    width: ResponsiveUtils.responsiveWidthFromPx(context, 6),
+                    height: ResponsiveUtils.responsiveHeightFromPx(context, 6),
                     decoration: const BoxDecoration(
                       color: Colors.white,
                       shape: BoxShape.circle,
@@ -1131,7 +1158,7 @@ class _NavigationButton extends StatelessWidget {
       iconWidget = Text(
         text!,
         style: GoogleFonts.ibmPlexMono(
-          fontSize: 12,
+          fontSize: ResponsiveUtils.responsiveFontSizeFromPx(context, 12),
           fontWeight: FontWeight.w600,
           color: Colors.white,
         ),
@@ -1160,14 +1187,20 @@ class _NavigationButton extends StatelessWidget {
     return Expanded(
       flex: flex ?? 2,
       child: Container(
-        margin: const EdgeInsets.fromLTRB(2, 2, 2, 2),
+        margin: EdgeInsets.fromLTRB(
+          ResponsiveUtils.responsivePaddingFromPx(context, 2),
+          ResponsiveUtils.responsivePaddingFromPx(context, 2),
+          ResponsiveUtils.responsivePaddingFromPx(context, 2),
+          ResponsiveUtils.responsivePaddingFromPx(context, 2),
+        ),
         decoration: BoxDecoration(
           color: buttonColor,
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.1),
-              blurRadius: 2,
-              offset: const Offset(0, 1),
+              blurRadius: ResponsiveUtils.responsivePaddingFromPx(context, 2),
+              offset: Offset(
+                  0, ResponsiveUtils.responsivePaddingFromPx(context, 1)),
             ),
           ],
         ),
@@ -1175,7 +1208,8 @@ class _NavigationButton extends StatelessWidget {
           color: Colors.transparent,
           child: InkWell(
             onTap: onTap,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(
+                ResponsiveUtils.responsivePaddingFromPx(context, 8)),
             child: Container(
               alignment: Alignment.center,
               child: iconWidget,
