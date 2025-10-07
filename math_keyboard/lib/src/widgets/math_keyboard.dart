@@ -136,9 +136,8 @@ class _MathKeyboardState extends State<MathKeyboard> {
             left: 0,
             right: 0,
             child: Padding(
-              padding: const EdgeInsets.only(
-                bottom: 10,
-              ),
+              padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).padding.bottom),
               child: Material(
                 type: MaterialType.transparency,
                 child: ColoredBox(
