@@ -500,8 +500,7 @@ class _Buttons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final keyboardHeight = ResponsiveUtils.responsiveHeightFromPx(
-        context, 240); // Approximately 26% of a standard screen
+    final keyboardHeight = ResponsiveUtils.responsiveHeightFromPx(context, 245);
 
     return SizedBox(
       height: keyboardHeight,

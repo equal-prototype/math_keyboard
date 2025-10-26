@@ -99,6 +99,15 @@ class TeXNode {
         setCursor();
         return NavigationState.success;
       }
+
+      // Check if this leaf contains a LaTeX command that starts with backslash
+      // If so, delete the entire command at once to avoid invalid intermediate states
+      if (expr.startsWith(r'\')) {
+        // This is a LaTeX command - delete it entirely
+        children.removeAt(courserPosition);
+        setCursor();
+        return NavigationState.success;
+      }
     }
 
     children.removeAt(courserPosition);
